@@ -1,0 +1,688 @@
+# MASTER PROMPT – Design a Modern Wholesale Pharmacy Android App
+
+You are an expert Mobile UI/UX Designer and Senior Flutter App Designer.
+
+Design a modern Android mobile application for a **Wholesale Pharmacy / Medicine Distribution Platform** similar to TrueMeds, Netmeds, PharmEasy, and IndiaMART Wholesale, but focused on **B2B medicine wholesalers, pharmacies, clinics, hospitals, and distributors**.
+
+## Goal
+
+Create a clean, premium, trustworthy, fast, and professional Android app UI.
+
+Do NOT create backend code.
+
+Only design complete UI screens with reusable components and proper navigation.
+
+Use Material Design 3 guidelines.
+
+The UI should be production-ready.
+
+---
+
+# Design Style
+
+Modern
+
+Minimal
+
+Professional
+
+Clean
+
+Medical Theme
+
+Rounded Corners (12–16px)
+
+Soft Shadows
+
+Smooth Animations
+
+Beautiful Icons
+
+Premium Cards
+
+Glassmorphism only where appropriate
+
+Responsive Design
+
+Dark Mode Support
+
+Accessibility Friendly
+
+---
+
+# Color Palette
+
+Primary:
+#0F9D58 (Medical Green)
+
+Secondary:
+#34A853
+
+Accent:
+#4285F4
+
+Background:
+#F8FAFC
+
+Surface:
+White
+
+Error:
+#EA4335
+
+Warning:
+#FBBC05
+
+Text:
+Dark Gray
+
+Use lots of white spacing.
+
+---
+
+# Typography
+
+Google Fonts
+
+Poppins
+
+Inter
+
+Readable font sizes
+
+Consistent spacing
+
+Modern hierarchy
+
+---
+
+# Bottom Navigation
+
+Home
+
+Categories
+
+Cart
+
+Orders
+
+Profile
+
+Floating Action Button:
+Quick Order
+
+---
+
+# Splash Screen
+
+Logo
+
+Medicine Illustration
+
+Loading Animation
+
+Tagline:
+
+"Your Trusted Wholesale Pharmacy"
+
+---
+
+# Login Screen
+
+Mobile Number Login
+
+OTP Verification
+
+Email Login
+
+Google Login
+
+Remember Me
+
+Forgot Password
+
+Beautiful Illustration
+
+---
+
+# Home Screen
+
+Search Bar
+
+Medicine Search
+
+Voice Search
+
+Categories
+
+Featured Medicines
+
+Popular Brands
+
+Offers Banner
+
+Recently Ordered
+
+Recommended Products
+
+Quick Reorder
+
+Nearby Distributor Card
+
+Trending Products
+
+Top Selling
+
+Seasonal Medicines
+
+Announcements
+
+---
+
+# Categories
+
+Tablet
+
+Capsule
+
+Injection
+
+Syrup
+
+Drops
+
+Cream
+
+Gel
+
+Medical Devices
+
+Surgical
+
+Ayurvedic
+
+OTC
+
+Baby Care
+
+Personal Care
+
+Supplements
+
+Healthcare
+
+Diagnostic Products
+
+View All
+
+---
+
+# Product Card
+
+Medicine Image
+
+Medicine Name
+
+Generic Name
+
+Strength
+
+Pack Size
+
+MRP
+
+Wholesale Price
+
+Discount %
+
+Available Stock
+
+GST Info
+
+Manufacturer
+
+Brand
+
+Minimum Order Quantity
+
+Add to Cart
+
+Wishlist
+
+Compare
+
+Share
+
+---
+
+# Product Details
+
+Large Image
+
+Image Gallery
+
+Medicine Description
+
+Composition
+
+Uses
+
+Dosage
+
+Side Effects
+
+Warnings
+
+Storage
+
+Manufacturer
+
+Expiry
+
+Batch
+
+Available Stock
+
+Price Table
+
+Bulk Pricing
+
+Customer Reviews
+
+FAQs
+
+Similar Medicines
+
+Add to Cart
+
+Buy Now
+
+---
+
+# Search Screen
+
+Smart Search
+
+Recent Searches
+
+Trending Searches
+
+Search Suggestions
+
+Barcode Scanner
+
+Voice Search
+
+Filters
+
+---
+
+# Filters
+
+Brand
+
+Price
+
+Manufacturer
+
+Availability
+
+Prescription
+
+Discount
+
+GST
+
+Category
+
+Pack Size
+
+Sort By
+
+Newest
+
+Price Low to High
+
+Price High to Low
+
+Popularity
+
+Best Seller
+
+---
+
+# Cart
+
+Medicine List
+
+Quantity Selector
+
+Coupon
+
+GST Calculation
+
+Delivery Charges
+
+Total
+
+Proceed to Checkout
+
+Save for Later
+
+---
+
+# Checkout
+
+Delivery Address
+
+Billing Address
+
+Select Payment
+
+Cash
+
+UPI
+
+Card
+
+Net Banking
+
+Credit Account
+
+Purchase Order
+
+Delivery Instructions
+
+Order Summary
+
+Invoice Preview
+
+Place Order
+
+---
+
+# Order Tracking
+
+Pending
+
+Accepted
+
+Packed
+
+Dispatched
+
+Out for Delivery
+
+Delivered
+
+Cancelled
+
+Timeline Animation
+
+---
+
+# My Orders
+
+Current Orders
+
+Past Orders
+
+Repeat Order
+
+Download Invoice
+
+Return Request
+
+Support
+
+---
+
+# Notifications
+
+Offers
+
+Stock Alerts
+
+Order Updates
+
+Payment Updates
+
+New Arrivals
+
+---
+
+# Wishlist
+
+Saved Medicines
+
+Price Drop
+
+Availability Alerts
+
+---
+
+# User Profile
+
+Business Name
+
+GST Number
+
+Drug License
+
+Owner Name
+
+Phone
+
+Email
+
+Address
+
+Change Password
+
+Language
+
+Dark Mode
+
+Logout
+
+---
+
+# Customer Support
+
+Chat
+
+WhatsApp
+
+Call
+
+Email
+
+FAQ
+
+Raise Ticket
+
+Live Support
+
+---
+
+# Admin Dashboard Design
+
+Dashboard Overview
+
+Today's Sales
+
+Revenue
+
+Orders
+
+Pending Orders
+
+Products
+
+Low Stock
+
+Expired Medicines
+
+Customers
+
+Distributors
+
+Inventory
+
+Payments
+
+Reports
+
+Analytics
+
+Graphs
+
+Notifications
+
+Settings
+
+---
+
+# Inventory Management
+
+Add Product
+
+Edit Product
+
+Delete Product
+
+Stock Update
+
+Expiry Alert
+
+Barcode
+
+QR Code
+
+Categories
+
+Brands
+
+Manufacturers
+
+Pricing
+
+GST
+
+---
+
+# Analytics
+
+Sales Graph
+
+Revenue Graph
+
+Top Products
+
+Top Customers
+
+Monthly Report
+
+Weekly Report
+
+Order Report
+
+Inventory Report
+
+Profit Report
+
+---
+
+# Animations
+
+Smooth Page Transition
+
+Hero Animation
+
+Shimmer Loading
+
+Skeleton Loader
+
+Button Ripple
+
+Animated Cards
+
+Pull to Refresh
+
+Micro Interactions
+
+---
+
+# Empty States
+
+No Orders
+
+No Cart
+
+No Search Results
+
+No Wishlist
+
+No Notifications
+
+Beautiful Illustrations
+
+Helpful Messages
+
+---
+
+# Error States
+
+Network Error
+
+Server Error
+
+Retry Button
+
+Offline Mode
+
+---
+
+# Components
+
+Modern Buttons
+
+Text Fields
+
+Dropdown
+
+Date Picker
+
+Cards
+
+Badges
+
+Chips
+
+Bottom Sheets
+
+Dialogs
+
+Snackbars
+
+Loading Indicators
+
+Reusable Components
+
+---
+
+# Deliverables
+
+Design every screen.
+
+Create reusable UI components.
+
+Maintain consistent spacing.
+
+Create design system.
+
+Include light mode and dark mode.
+
+Follow Material Design 3.
+
+The result should look like a premium Android application ready for production.

@@ -1,0 +1,2 @@
+- [Expo search screen FlatList](expo-search-flatlist.md) — renderItem must never be null in FlatList; use ScrollView for header-only no-query states.
+- [AsyncStorage auth gate in splash](expo-auth-splash.md) — splash screen reads AsyncStorage directly to decide login vs tabs destination; no context needed.

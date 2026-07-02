@@ -1,0 +1,23 @@
+kind = "mobile"
+previewPath = "/"
+title = "Wholesale Pharmacy"
+version = "1.0.0"
+id = "artifacts/pharma-app"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/" ]
+localPort = 19792
+
+[services.development]
+run = "PORT=19792 pnpm --filter @workspace/pharma-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pharma-app", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/pharma-app", "run", "serve" ]
+
+[services.env]
+PORT = "19792"
+BASE_PATH = "/"
