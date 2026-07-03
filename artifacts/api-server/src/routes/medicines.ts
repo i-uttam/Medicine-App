@@ -7,32 +7,36 @@ const router: IRouter = Router();
 
 // GET /api/medicines
 router.get("/medicines", async (req, res) => {
-  const { search, categoryId, prescriptionRequired, limit = "50", offset = "0" } = req.query as Record<string, string>;
+  const { search, categoryId, prescriptionRequired, limit = "50", offset = "0" } =
+    req.query as Record<string, string>;
 
-  const limitNum = Math.min(parseInt(limit, 10) || 50, 200);
-  const offsetNum = parseInt(offset, 10) || 0;
+  const limitNum = Math.max(1, Math.min(parseInt(limit, 10) || 50, 200));
+  const offsetNum = Math.max(0, parseInt(offset, 10) || 0);
 
   const conditions = [];
 
-  if (search) {
+  if (search && search.trim()) {
+    const term = search.trim();
     conditions.push(
       or(
-        ilike(medicinesTable.name, `%${search}%`),
-        ilike(medicinesTable.brand, `%${search}%`),
-        ilike(medicinesTable.genericName, `%${search}%`),
+        ilike(medicinesTable.name, `%${term}%`),
+        ilike(medicinesTable.brand, `%${term}%`),
+        ilike(medicinesTable.genericName, `%${term}%`),
       ),
     );
   }
 
   if (categoryId) {
     const catId = parseInt(categoryId, 10);
-    if (!isNaN(catId)) {
+    if (!isNaN(catId) && catId > 0) {
       conditions.push(eq(medicinesTable.categoryId, catId));
     }
   }
 
   if (prescriptionRequired !== undefined) {
-    conditions.push(eq(medicinesTable.prescriptionRequired, prescriptionRequired === "true"));
+    conditions.push(
+      eq(medicinesTable.prescriptionRequired, prescriptionRequired === "true"),
+    );
   }
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
@@ -62,7 +66,7 @@ router.get("/medicines", async (req, res) => {
 // GET /api/medicines/:id
 router.get("/medicines/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) {
+  if (isNaN(id) || id <= 0) {
     res.status(400).json({ error: "Invalid medicine ID" });
     return;
   }
