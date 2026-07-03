@@ -9,28 +9,6 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Wholesale Pharmacy"
-
-[[workflows.workflow]]
-name = "Wholesale Pharmacy"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=19792 pnpm --filter @workspace/pharma-app run dev"
-waitForPort = 19792
 
 [agent]
 stack = "PNPM_WORKSPACE"

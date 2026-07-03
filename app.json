@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "c1b15fb7-70e6-4ea8-9446-f8e1e7ea8b63"
+      }
+    },
+    "android": {
+      "package": "com.uttam2132.workspace"
+    }
+  }
+}
