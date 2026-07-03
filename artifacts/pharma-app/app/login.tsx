@@ -100,7 +100,13 @@ export default function LoginScreen() {
         return;
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.push({ pathname: '/otp', params: { email: email.trim().toLowerCase() } });
+      router.push({
+        pathname: '/otp',
+        params: {
+          email: email.trim().toLowerCase(),
+          ...(data.devOtp ? { devOtp: data.devOtp } : {}),
+        },
+      });
     } catch {
       setError('Network error. Please check your connection.');
     } finally {

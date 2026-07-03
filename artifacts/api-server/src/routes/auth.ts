@@ -40,10 +40,7 @@ router.post("/auth/send-otp", async (req, res) => {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: "Email service is not configured." });
-    return;
-  }
+  const isDev = process.env.NODE_ENV !== "production";
 
   const key = email!.toLowerCase();
 
@@ -58,6 +55,19 @@ router.post("/auth/send-otp", async (req, res) => {
   }
 
   const otp = generateOtp();
+
+  // Dev bypass: if no API key, log OTP to console and return it in response
+  if (!apiKey) {
+    if (!isDev) {
+      res.status(500).json({ error: "Email service is not configured." });
+      return;
+    }
+    otpStore.set(key, { otp, expiresAt: Date.now() + OTP_TTL_MS, attempts: 0 });
+    sendCooldown.set(key, Date.now());
+    console.log(`\n[DEV] OTP for ${email}: ${otp}\n`);
+    res.json({ success: true, devOtp: otp });
+    return;
+  }
 
   try {
     const resend = new Resend(apiKey);

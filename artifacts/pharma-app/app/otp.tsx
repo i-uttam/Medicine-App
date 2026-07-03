@@ -29,8 +29,9 @@ export default function OtpScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
-  const { phone, email } = useLocalSearchParams<{ phone?: string; email?: string }>();
-  const [otp, setOtp] = useState('');
+  const { phone, email, devOtp: devOtpParam } = useLocalSearchParams<{ phone?: string; email?: string; devOtp?: string }>();
+  const [otp, setOtp] = useState(devOtpParam ?? '');
+  const [devBanner, setDevBanner] = useState(!!devOtpParam);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -42,7 +43,7 @@ export default function OtpScreen() {
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 300);
+    if (!devOtpParam) setTimeout(() => inputRef.current?.focus(), 300);
   }, []);
 
   useEffect(() => {
@@ -117,6 +118,10 @@ export default function OtpScreen() {
         setError(data.error ?? 'Failed to resend OTP.');
         return;
       }
+      if (data.devOtp) {
+        setOtp(data.devOtp);
+        setDevBanner(true);
+      }
       setResendTimer(30);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
@@ -146,6 +151,18 @@ export default function OtpScreen() {
             {phone ? `+91 ${phone}` : email}
           </Text>
         </Text>
+
+        {devBanner && (
+          <View style={styles.devBanner}>
+            <Ionicons name="code-working-outline" size={15} color="#92400e" />
+            <Text style={styles.devBannerText}>
+              Dev mode — OTP auto-filled: <Text style={{ fontWeight: '700' }}>{otp}</Text>
+            </Text>
+            <Pressable onPress={() => setDevBanner(false)}>
+              <Ionicons name="close" size={15} color="#92400e" />
+            </Pressable>
+          </View>
+        )}
 
         {/* OTP Boxes */}
         <Animated.View style={[styles.boxRow, shakeStyle]}>
@@ -258,4 +275,11 @@ const styles = StyleSheet.create({
   resendLabel: { fontSize: 14, fontFamily: 'Inter_400Regular' },
   resendTimer: { fontSize: 14, fontFamily: 'Inter_500Medium' },
   resendLink: { fontSize: 14, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
+  devBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#fef3c7', borderWidth: 1, borderColor: '#fcd34d',
+    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
+    width: '100%',
+  },
+  devBannerText: { flex: 1, fontSize: 12, color: '#92400e', fontFamily: 'Inter_400Regular' },
 });
