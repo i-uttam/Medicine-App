@@ -30,7 +30,6 @@ export const medicinesTable = pgTable("medicines", {
   discount: numeric("discount", { precision: 5, scale: 2 }).default("0"),
   gstRate: numeric("gst_rate", { precision: 5, scale: 2 }).default("12"),
   stock: integer("stock").notNull().default(0),
-  minOrderQty: integer("min_order_qty").notNull().default(1),
   prescriptionRequired: boolean("prescription_required").notNull().default(false),
   categoryId: integer("category_id").references(() => categoriesTable.id),
   iconName: text("icon_name"),

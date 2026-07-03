@@ -36,17 +36,17 @@ export default function FeaturedProductCard({ medicine }: Props) {
     scale.value = withSpring(0.96, { damping: 12 }, () => {
       scale.value = withSpring(1, { damping: 12 });
     });
-    addItem(medicine, medicine.minOrderQty);
+    addItem(medicine, 1);
   }
 
   function handleInc() {
     Haptics.selectionAsync();
-    updateQty(medicine.id, qty + medicine.minOrderQty);
+    updateQty(medicine.id, qty + 1);
   }
 
   function handleDec() {
     Haptics.selectionAsync();
-    updateQty(medicine.id, qty - medicine.minOrderQty);
+    updateQty(medicine.id, qty - 1);
   }
 
   return (
@@ -142,11 +142,6 @@ export default function FeaturedProductCard({ medicine }: Props) {
           {isLowStock && !isOutOfStock && (
             <Text style={[styles.stockLabel, { color: '#E67E22' }]}>
               Only {medicine.stock} left
-            </Text>
-          )}
-          {medicine.minOrderQty > 1 && !isLowStock && (
-            <Text style={[styles.stockLabel, { color: colors.mutedForeground }]}>
-              Min: {medicine.minOrderQty} units
             </Text>
           )}
 

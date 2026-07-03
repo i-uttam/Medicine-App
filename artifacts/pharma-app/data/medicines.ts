@@ -10,7 +10,6 @@ export type Medicine = {
   wholesalePrice: number;
   discount: number;
   stock: number;
-  minOrderQty: number;
   manufacturer: string;
   description: string;
   composition: string;
@@ -28,7 +27,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm001', name: 'Paracetamol 500mg', genericName: 'Paracetamol', brand: 'Calpol',
     strength: '500mg', packSize: 'Strip of 15 Tablets', category: 'tablets',
-    mrp: 55, wholesalePrice: 38, discount: 31, stock: 2400, minOrderQty: 10,
+    mrp: 55, wholesalePrice: 38, discount: 31, stock: 2400,
     manufacturer: 'GlaxoSmithKline', gstRate: 12,
     description: 'Paracetamol 500mg is a widely used analgesic and antipyretic for mild to moderate pain and fever.',
     composition: 'Paracetamol IP 500mg',
@@ -41,7 +40,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm002', name: 'Amoxicillin 500mg', genericName: 'Amoxicillin', brand: 'Mox-500',
     strength: '500mg', packSize: 'Strip of 10 Capsules', category: 'capsules',
-    mrp: 115, wholesalePrice: 82, discount: 29, stock: 1800, minOrderQty: 5,
+    mrp: 115, wholesalePrice: 82, discount: 29, stock: 1800,
     manufacturer: 'Ranbaxy', gstRate: 12,
     description: 'Amoxicillin is a broad-spectrum penicillin antibiotic used for treating bacterial infections.',
     composition: 'Amoxicillin Trihydrate IP 500mg',
@@ -54,7 +53,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm003', name: 'Metformin 500mg', genericName: 'Metformin HCl', brand: 'Glycomet',
     strength: '500mg', packSize: 'Strip of 20 Tablets', category: 'tablets',
-    mrp: 48, wholesalePrice: 32, discount: 33, stock: 3200, minOrderQty: 20,
+    mrp: 48, wholesalePrice: 32, discount: 33, stock: 3200,
     manufacturer: 'USV Ltd', gstRate: 12,
     description: 'Metformin is an oral diabetes medicine used to control blood sugar levels in type-2 diabetes.',
     composition: 'Metformin Hydrochloride IP 500mg',
@@ -67,7 +66,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm004', name: 'Amlodipine 5mg', genericName: 'Amlodipine Besylate', brand: 'Amlip-5',
     strength: '5mg', packSize: 'Strip of 10 Tablets', category: 'tablets',
-    mrp: 42, wholesalePrice: 28, discount: 33, stock: 1500, minOrderQty: 10,
+    mrp: 42, wholesalePrice: 28, discount: 33, stock: 1500,
     manufacturer: 'Cipla', gstRate: 12,
     description: 'Amlodipine is a calcium channel blocker used for high blood pressure and angina.',
     composition: 'Amlodipine Besylate 6.93mg equiv. to Amlodipine 5mg',
@@ -80,7 +79,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm005', name: 'Atorvastatin 10mg', genericName: 'Atorvastatin Calcium', brand: 'Lipitor',
     strength: '10mg', packSize: 'Strip of 10 Tablets', category: 'tablets',
-    mrp: 135, wholesalePrice: 92, discount: 32, stock: 2100, minOrderQty: 10,
+    mrp: 135, wholesalePrice: 92, discount: 32, stock: 2100,
     manufacturer: 'Pfizer', gstRate: 12,
     description: 'Atorvastatin is a statin medication used to treat high cholesterol and prevent cardiovascular disease.',
     composition: 'Atorvastatin Calcium Trihydrate 10.85mg equiv. to Atorvastatin 10mg',
@@ -93,7 +92,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm006', name: 'Omeprazole 20mg', genericName: 'Omeprazole', brand: 'Omez',
     strength: '20mg', packSize: 'Strip of 10 Capsules', category: 'capsules',
-    mrp: 65, wholesalePrice: 44, discount: 32, stock: 2800, minOrderQty: 10,
+    mrp: 65, wholesalePrice: 44, discount: 32, stock: 2800,
     manufacturer: 'Dr Reddy\'s', gstRate: 12,
     description: 'Omeprazole is a proton pump inhibitor that reduces stomach acid production.',
     composition: 'Omeprazole IP 20mg',
@@ -106,7 +105,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm007', name: 'Doxycycline 100mg', genericName: 'Doxycycline Hyclate', brand: 'Doxt-SL',
     strength: '100mg', packSize: 'Strip of 10 Capsules', category: 'capsules',
-    mrp: 88, wholesalePrice: 59, discount: 33, stock: 1200, minOrderQty: 5,
+    mrp: 88, wholesalePrice: 59, discount: 33, stock: 1200,
     manufacturer: 'Sun Pharma', gstRate: 12,
     description: 'Doxycycline is a broad-spectrum tetracycline antibiotic.',
     composition: 'Doxycycline Hyclate IP 100mg',
@@ -119,7 +118,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm008', name: 'Vitamin D3 60000IU', genericName: 'Cholecalciferol', brand: 'D-Rise',
     strength: '60000IU', packSize: 'Box of 4 Sachets', category: 'supplements',
-    mrp: 120, wholesalePrice: 82, discount: 32, stock: 3600, minOrderQty: 10,
+    mrp: 120, wholesalePrice: 82, discount: 32, stock: 3600,
     manufacturer: 'Sun Pharma', gstRate: 5,
     description: 'Vitamin D3 supplement for deficiency correction and bone health.',
     composition: 'Cholecalciferol (Vitamin D3) 60,000 IU',
@@ -132,7 +131,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm009', name: 'Ceftriaxone 1g Injection', genericName: 'Ceftriaxone Sodium', brand: 'Monocef',
     strength: '1g', packSize: 'Vial of 1g powder', category: 'injections',
-    mrp: 185, wholesalePrice: 128, discount: 31, stock: 800, minOrderQty: 5,
+    mrp: 185, wholesalePrice: 128, discount: 31, stock: 800,
     manufacturer: 'Aristo Pharma', gstRate: 12,
     description: 'Ceftriaxone is a third-generation cephalosporin antibiotic for serious infections.',
     composition: 'Ceftriaxone Sodium equivalent to Ceftriaxone 1g',
@@ -145,7 +144,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm010', name: 'Insulin Glargine 100IU', genericName: 'Insulin Glargine', brand: 'Lantus',
     strength: '100IU/mL', packSize: '10mL Vial', category: 'injections',
-    mrp: 980, wholesalePrice: 710, discount: 28, stock: 400, minOrderQty: 2,
+    mrp: 980, wholesalePrice: 710, discount: 28, stock: 400,
     manufacturer: 'Sanofi', gstRate: 12,
     description: 'Long-acting insulin analogue for once-daily subcutaneous injection in diabetes management.',
     composition: 'Insulin Glargine 100 IU/mL',
@@ -158,7 +157,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm011', name: 'Ambroxol Syrup 30mg', genericName: 'Ambroxol HCl', brand: 'Ambril',
     strength: '30mg/5mL', packSize: '100mL Bottle', category: 'syrups',
-    mrp: 68, wholesalePrice: 46, discount: 32, stock: 1600, minOrderQty: 12,
+    mrp: 68, wholesalePrice: 46, discount: 32, stock: 1600,
     manufacturer: 'Mankind', gstRate: 12,
     description: 'Mucolytic agent that thins and loosens mucus in the airways for easy expectoration.',
     composition: 'Ambroxol Hydrochloride BP 30mg per 5mL',
@@ -171,7 +170,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm012', name: 'Cetirizine Syrup 5mg', genericName: 'Cetirizine HCl', brand: 'Zyrtec',
     strength: '5mg/5mL', packSize: '60mL Bottle', category: 'syrups',
-    mrp: 55, wholesalePrice: 38, discount: 31, stock: 2200, minOrderQty: 12,
+    mrp: 55, wholesalePrice: 38, discount: 31, stock: 2200,
     manufacturer: 'UCB India', gstRate: 12,
     description: 'Second-generation antihistamine for allergic conditions.',
     composition: 'Cetirizine Hydrochloride IP 5mg per 5mL',
@@ -184,7 +183,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm013', name: 'Betamethasone Cream 0.1%', genericName: 'Betamethasone Valerate', brand: 'Betnovate',
     strength: '0.1% w/w', packSize: '20g Tube', category: 'cream',
-    mrp: 78, wholesalePrice: 54, discount: 31, stock: 900, minOrderQty: 6,
+    mrp: 78, wholesalePrice: 54, discount: 31, stock: 900,
     manufacturer: 'GlaxoSmithKline', gstRate: 12,
     description: 'Topical corticosteroid for inflammatory and allergic skin conditions.',
     composition: 'Betamethasone Valerate BP 0.1% w/w',
@@ -197,7 +196,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm014', name: 'Diclofenac Gel 1%', genericName: 'Diclofenac Diethylamine', brand: 'Voveran',
     strength: '1.16% w/w', packSize: '30g Tube', category: 'cream',
-    mrp: 92, wholesalePrice: 64, discount: 30, stock: 1400, minOrderQty: 6,
+    mrp: 92, wholesalePrice: 64, discount: 30, stock: 1400,
     manufacturer: 'Novartis', gstRate: 12,
     description: 'Topical NSAID gel for local relief of pain and inflammation.',
     composition: 'Diclofenac Diethylamine 1.16% w/w equiv. to Diclofenac Sodium 1% w/w',
@@ -210,7 +209,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm015', name: 'Ashwagandha 300mg', genericName: 'Withania somnifera', brand: 'KSM-66',
     strength: '300mg', packSize: 'Bottle of 60 Capsules', category: 'ayurvedic',
-    mrp: 450, wholesalePrice: 310, discount: 31, stock: 1100, minOrderQty: 6,
+    mrp: 450, wholesalePrice: 310, discount: 31, stock: 1100,
     manufacturer: 'Himalaya', gstRate: 5,
     description: 'Standardised Ashwagandha root extract for stress, energy, and vitality.',
     composition: 'KSM-66 Ashwagandha Root Extract 300mg (5% withanolides)',
@@ -223,7 +222,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm016', name: 'Liv.52 DS Tablet', genericName: 'Hepatoprotective Herbal', brand: 'Himalaya',
     strength: 'DS', packSize: 'Bottle of 60 Tablets', category: 'ayurvedic',
-    mrp: 220, wholesalePrice: 152, discount: 31, stock: 1800, minOrderQty: 10,
+    mrp: 220, wholesalePrice: 152, discount: 31, stock: 1800,
     manufacturer: 'Himalaya Drug Company', gstRate: 5,
     description: 'Herbal hepatoprotective for liver detox and maintenance of liver function.',
     composition: 'Caper Bush 65mg + Chicory 65mg + Black Nightshade 32mg + Arjuna 32mg + Yarrow 16mg + Tamarisk 16mg',
@@ -236,7 +235,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm017', name: 'Triphala Churna 500g', genericName: 'Triphala Powder', brand: 'Dabur',
     strength: '500g', packSize: '500g Jar', category: 'ayurvedic',
-    mrp: 180, wholesalePrice: 124, discount: 31, stock: 700, minOrderQty: 6,
+    mrp: 180, wholesalePrice: 124, discount: 31, stock: 700,
     manufacturer: 'Dabur India', gstRate: 5,
     description: 'Traditional Ayurvedic formulation for digestive health and gentle detoxification.',
     composition: 'Amalaki (Emblica officinalis) + Bibhitaki (Terminalia bellirica) + Haritaki (Terminalia chebula) in equal parts',
@@ -249,7 +248,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm018', name: 'Vitamin C 500mg', genericName: 'Ascorbic Acid', brand: 'Limcee',
     strength: '500mg', packSize: 'Strip of 15 Chewable Tablets', category: 'supplements',
-    mrp: 38, wholesalePrice: 26, discount: 32, stock: 4200, minOrderQty: 20,
+    mrp: 38, wholesalePrice: 26, discount: 32, stock: 4200,
     manufacturer: 'Abbott', gstRate: 5,
     description: 'Chewable Vitamin C tablet for immunity, antioxidant protection, and skin health.',
     composition: 'Ascorbic Acid (Vitamin C) USP 500mg',
@@ -262,7 +261,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm019', name: 'Calcium + Vitamin D3', genericName: 'Calcium Carbonate + D3', brand: 'Shelcal-500',
     strength: '500mg+250IU', packSize: 'Strip of 15 Tablets', category: 'supplements',
-    mrp: 118, wholesalePrice: 82, discount: 31, stock: 2600, minOrderQty: 10,
+    mrp: 118, wholesalePrice: 82, discount: 31, stock: 2600,
     manufacturer: 'Elder Pharma', gstRate: 5,
     description: 'Calcium and Vitamin D3 combination for bone health and osteoporosis prevention.',
     composition: 'Calcium Carbonate equivalent to Elemental Calcium 500mg + Vitamin D3 250 IU',
@@ -275,7 +274,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm020', name: 'B-Complex Forte Capsule', genericName: 'Multivitamin B-Complex', brand: 'Becosules',
     strength: 'Forte', packSize: 'Strip of 20 Capsules', category: 'supplements',
-    mrp: 78, wholesalePrice: 54, discount: 31, stock: 3100, minOrderQty: 10,
+    mrp: 78, wholesalePrice: 54, discount: 31, stock: 3100,
     manufacturer: 'Pfizer', gstRate: 5,
     description: 'Comprehensive B-Complex with Vitamin C for energy metabolism and nervous system health.',
     composition: 'Vit B1 10mg + B2 10mg + B3 100mg + B5 50mg + B6 3mg + B12 15mcg + Folic Acid 1.5mg + Biotin 100mcg + Vit C 150mg',
@@ -288,7 +287,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm021', name: 'Antacid Tablet (Mint)', genericName: 'Aluminium Hydroxide + Magnesium Hydroxide', brand: 'Digene',
     strength: 'Regular', packSize: 'Strip of 10 Tablets', category: 'otc',
-    mrp: 32, wholesalePrice: 22, discount: 31, stock: 5000, minOrderQty: 24,
+    mrp: 32, wholesalePrice: 22, discount: 31, stock: 5000,
     manufacturer: 'Abbott', gstRate: 12,
     description: 'Fast-acting antacid for relief from acidity, heartburn, and gas.',
     composition: 'Aluminium Hydroxide 250mg + Magnesium Hydroxide 250mg + Simethicone 50mg',
@@ -301,7 +300,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm022', name: 'Surgical Cotton 200g', genericName: 'Absorbent Cotton', brand: 'Medicare',
     strength: 'N/A', packSize: '200g Roll', category: 'surgical',
-    mrp: 68, wholesalePrice: 46, discount: 32, stock: 1200, minOrderQty: 12,
+    mrp: 68, wholesalePrice: 46, discount: 32, stock: 1200,
     manufacturer: 'Medicare Surgical', gstRate: 5,
     description: 'Sterile absorbent cotton for wound dressing and medical applications.',
     composition: 'Purified absorbent cotton wool IP',
@@ -314,7 +313,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm023', name: 'Digital Thermometer', genericName: 'Clinical Thermometer', brand: 'Omron',
     strength: 'N/A', packSize: '1 Unit with Case', category: 'devices',
-    mrp: 250, wholesalePrice: 172, discount: 31, stock: 600, minOrderQty: 5,
+    mrp: 250, wholesalePrice: 172, discount: 31, stock: 600,
     manufacturer: 'Omron Healthcare', gstRate: 18,
     description: 'Flexible tip digital clinical thermometer for accurate temperature measurement.',
     composition: 'Electronic digital thermometer with LCD display',
@@ -327,7 +326,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm024', name: 'Baby Gripe Water 100mL', genericName: 'Dill Oil + Sodium Bicarbonate', brand: 'Woodward\'s',
     strength: 'Standard', packSize: '100mL Bottle', category: 'baby',
-    mrp: 58, wholesalePrice: 40, discount: 31, stock: 900, minOrderQty: 12,
+    mrp: 58, wholesalePrice: 40, discount: 31, stock: 900,
     manufacturer: 'Woodward\'s Ltd', gstRate: 12,
     description: 'Classic gripe water for infants for relief from colic, gas, and stomach discomfort.',
     composition: 'Dill Seed Oil 0.46mg/5mL + Sodium Bicarbonate 52.5mg/5mL',
@@ -340,7 +339,7 @@ export const MEDICINES: Medicine[] = [
   {
     id: 'm025', name: 'ORS Sachets Electrolyte', genericName: 'Oral Rehydration Salts', brand: 'Electral',
     strength: 'Standard WHO formula', packSize: 'Box of 21 Sachets', category: 'otc',
-    mrp: 92, wholesalePrice: 63, discount: 32, stock: 2400, minOrderQty: 12,
+    mrp: 92, wholesalePrice: 63, discount: 32, stock: 2400,
     manufacturer: 'FDC Ltd', gstRate: 5,
     description: 'WHO standard ORS powder for prevention and treatment of dehydration.',
     composition: 'Sodium Chloride 3.5g + Potassium Chloride 1.5g + Trisodium Citrate 2.9g + Glucose 20g per litre',

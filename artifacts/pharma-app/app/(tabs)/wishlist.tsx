@@ -115,7 +115,7 @@ export default function WishlistScreen() {
                   disabled={item.stock === 0}
                   onPress={() => {
                     if (item.stock === 0) return;
-                    addItem(item, item.minOrderQty);
+                    addItem(item, 1);
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   }}
                 >

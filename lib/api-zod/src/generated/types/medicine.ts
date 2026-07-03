@@ -25,7 +25,6 @@ export interface Medicine {
   discount?: string | null;
   gstRate?: string | null;
   stock: number;
-  minOrderQty: number;
   prescriptionRequired: boolean;
   categoryId?: number | null;
   iconName?: string | null;

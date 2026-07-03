@@ -47,7 +47,7 @@ export default function ProductDetailScreen() {
   const gstAmount = Math.round(medicine.wholesalePrice * medicine.gstRate / 100);
 
   const BULK_TIERS = [
-    { min: medicine.minOrderQty, max: 49, price: medicine.wholesalePrice, label: 'Standard' },
+    { min: 1, max: 49, price: medicine.wholesalePrice, label: 'Standard' },
     { min: 50, max: 199, price: Math.round(medicine.wholesalePrice * 0.95), label: '5% extra off' },
     { min: 200, max: 999, price: Math.round(medicine.wholesalePrice * 0.90), label: '10% extra off' },
     { min: 1000, max: null, price: Math.round(medicine.wholesalePrice * 0.85), label: '15% extra off' },
@@ -122,18 +122,12 @@ export default function ProductDetailScreen() {
             </View>
           </View>
 
-          {/* Stock / MOQ */}
+          {/* Stock / GST */}
           <View style={[styles.infoRow, { borderColor: colors.border }]}>
             <View style={styles.infoItem}>
               <Ionicons name="cube-outline" size={18} color={colors.primary} />
               <Text style={[styles.infoLabel, { color: colors.mutedForeground }]}>Stock</Text>
               <Text style={[styles.infoValue, { color: colors.foreground }]}>{medicine.stock.toLocaleString()} units</Text>
-            </View>
-            <View style={[styles.infoDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.infoItem}>
-              <Ionicons name="bag-outline" size={18} color={colors.primary} />
-              <Text style={[styles.infoLabel, { color: colors.mutedForeground }]}>Min Order</Text>
-              <Text style={[styles.infoValue, { color: colors.foreground }]}>{medicine.minOrderQty} units</Text>
             </View>
             <View style={[styles.infoDivider, { backgroundColor: colors.border }]} />
             <View style={styles.infoItem}>
@@ -216,14 +210,14 @@ export default function ProductDetailScreen() {
             <View style={styles.qtyControl}>
               <Pressable
                 style={[styles.qtyBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
-                onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty - medicine.minOrderQty); }}
+                onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty - 1); }}
               >
                 <Ionicons name="remove" size={18} color={colors.foreground} />
               </Pressable>
               <Text style={[styles.qtyNum, { color: colors.foreground }]}>{qty}</Text>
               <Pressable
                 style={[styles.qtyBtn, { backgroundColor: colors.primary }]}
-                onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty + medicine.minOrderQty); }}
+                onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty + 1); }}
               >
                 <Ionicons name="add" size={18} color="#FFF" />
               </Pressable>
@@ -242,12 +236,12 @@ export default function ProductDetailScreen() {
               onPress={() => {
                 if (isOutOfStock) return;
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                addItem(medicine, medicine.minOrderQty);
+                addItem(medicine, 1);
               }}
               disabled={isOutOfStock}
             >
               <Ionicons name="cart-outline" size={20} color="#FFF" />
-              <Text style={styles.addToCartText}>{isOutOfStock ? 'Out of Stock' : `Add to Cart · Min ${medicine.minOrderQty}`}</Text>
+              <Text style={styles.addToCartText}>{isOutOfStock ? 'Out of Stock' : 'Add to Cart'}</Text>
             </Pressable>
           </View>
         )}

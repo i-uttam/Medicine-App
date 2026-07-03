@@ -531,8 +531,6 @@ components:
           nullable: true
         stock:
           type: integer
-        minOrderQty:
-          type: integer
         prescriptionRequired:
           type: boolean
         categoryId:
@@ -549,7 +547,7 @@ components:
           nullable: true
         createdAt:
           type: string
-      required: [id, name, brand, mrp, wholesalePrice, stock, minOrderQty, prescriptionRequired, createdAt]
+      required: [id, name, brand, mrp, wholesalePrice, stock, prescriptionRequired, createdAt]
 
     MedicineListResponse:
       type: object

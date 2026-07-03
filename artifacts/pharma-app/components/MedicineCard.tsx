@@ -31,7 +31,7 @@ export default function MedicineCard({ medicine, compact = false }: Props) {
     scale.value = withSpring(0.92, { damping: 10 }, () => {
       scale.value = withSpring(1, { damping: 10 });
     });
-    addItem(medicine, medicine.minOrderQty);
+    addItem(medicine, 1);
   }
 
   if (compact) {
@@ -58,14 +58,14 @@ export default function MedicineCard({ medicine, compact = false }: Props) {
           <View style={styles.qtyControl}>
             <Pressable
               style={[styles.qtyBtn, { backgroundColor: colors.muted }]}
-              onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty - medicine.minOrderQty); }}
+              onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty - 1); }}
             >
               <Ionicons name="remove" size={14} color={colors.foreground} />
             </Pressable>
             <Text style={[styles.qtyNum, { color: colors.foreground }]}>{qty}</Text>
             <Pressable
               style={[styles.qtyBtn, { backgroundColor: colors.primary }]}
-              onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty + medicine.minOrderQty); }}
+              onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty + 1); }}
             >
               <Ionicons name="add" size={14} color="#FFF" />
             </Pressable>
@@ -143,23 +143,20 @@ export default function MedicineCard({ medicine, compact = false }: Props) {
                   <Text style={[styles.stockText, { color: colors.primary }]}>In Stock</Text>
                 </View>
               )}
-              {medicine.minOrderQty > 1 && (
-                <Text style={[styles.moq, { color: colors.mutedForeground }]}>Min: {medicine.minOrderQty}</Text>
-              )}
             </View>
 
             {qty > 0 ? (
               <View style={styles.qtyControl}>
                 <Pressable
                   style={[styles.qtyBtn, { backgroundColor: colors.muted }]}
-                  onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty - medicine.minOrderQty); }}
+                  onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty - 1); }}
                 >
                   <Ionicons name="remove" size={14} color={colors.foreground} />
                 </Pressable>
                 <Text style={[styles.qtyNum, { color: colors.foreground }]}>{qty}</Text>
                 <Pressable
                   style={[styles.qtyBtn, { backgroundColor: colors.primary }]}
-                  onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty + medicine.minOrderQty); }}
+                  onPress={() => { Haptics.selectionAsync(); updateQty(medicine.id, qty + 1); }}
                 >
                   <Ionicons name="add" size={14} color="#FFF" />
                 </Pressable>

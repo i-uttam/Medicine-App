@@ -60,14 +60,14 @@ export default function CartScreen() {
               <View style={styles.qtyRow}>
                 <Pressable
                   style={[styles.qtyBtn, { borderColor: colors.border }]}
-                  onPress={() => { Haptics.selectionAsync(); updateQty(item.medicine.id, Math.max(0, item.qty - item.medicine.minOrderQty)); }}
+                  onPress={() => { Haptics.selectionAsync(); updateQty(item.medicine.id, Math.max(0, item.qty - 1)); }}
                 >
                   <Ionicons name="remove" size={16} color={colors.foreground} />
                 </Pressable>
                 <Text style={[styles.qtyText, { color: colors.foreground }]}>{item.qty}</Text>
                 <Pressable
                   style={[styles.qtyBtn, { borderColor: colors.primary, backgroundColor: colors.primary }]}
-                  onPress={() => { Haptics.selectionAsync(); updateQty(item.medicine.id, item.qty + item.medicine.minOrderQty); }}
+                  onPress={() => { Haptics.selectionAsync(); updateQty(item.medicine.id, item.qty + 1); }}
                 >
                   <Ionicons name="add" size={16} color="#FFFFFF" />
                 </Pressable>
