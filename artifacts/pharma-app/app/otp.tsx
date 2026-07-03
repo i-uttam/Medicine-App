@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   StyleSheet,
@@ -21,7 +22,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
 
-const OTP_LENGTH = 4;
+const OTP_LENGTH = 6;
+const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
 
 export default function OtpScreen() {
   const colors = useColors();
@@ -31,6 +33,7 @@ export default function OtpScreen() {
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
   const inputRef = useRef<TextInput>(null);
   const shakeX = useSharedValue(0);
@@ -66,20 +69,60 @@ export default function OtpScreen() {
     if (otp.length < OTP_LENGTH) {
       shake();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setError('Please enter the complete OTP');
+      setError('Please enter the complete 6-digit OTP');
       return;
     }
-    // Mock: any 4-digit OTP works
+
     setLoading(true);
+    setError('');
     try {
-      await login(phone ?? '', email ?? '');
+      const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, phone, otp }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? 'Verification failed. Please try again.');
+        shake();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+
+      await login(data.user?.phone ?? phone ?? '', data.user?.email ?? email ?? '');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)');
     } catch {
-      setError('Verification failed. Please try again.');
+      setError('Network error. Please check your connection.');
       shake();
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (resendLoading) return;
+    setResendLoading(true);
+    setError('');
+    setOtp('');
+    try {
+      const res = await fetch(`${API_BASE}/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? 'Failed to resend OTP.');
+        return;
+      }
+      setResendTimer(30);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setResendLoading(false);
     }
   }
 
@@ -98,13 +141,10 @@ export default function OtpScreen() {
 
         <Text style={[styles.title, { color: colors.foreground }]}>OTP Verification</Text>
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          We sent a 4-digit OTP to{'\n'}
+          We sent a 6-digit OTP to{'\n'}
           <Text style={[styles.target, { color: colors.foreground }]}>
             {phone ? `+91 ${phone}` : email}
           </Text>
-        </Text>
-        <Text style={[styles.mockNote, { color: colors.accent }]}>
-          (Demo: enter any 4 digits)
         </Text>
 
         {/* OTP Boxes */}
@@ -136,7 +176,7 @@ export default function OtpScreen() {
           })}
         </Animated.View>
 
-        {/* Hidden input — positioned off-screen so it works on web too */}
+        {/* Hidden input */}
         <TextInput
           ref={inputRef}
           style={styles.hiddenInput}
@@ -163,7 +203,11 @@ export default function OtpScreen() {
           onPress={handleVerify}
           disabled={loading}
         >
-          <Text style={styles.verifyText}>{loading ? 'Verifying…' : 'Verify OTP'}</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.verifyText}>Verify OTP</Text>
+          )}
         </Pressable>
 
         {/* Resend */}
@@ -171,12 +215,14 @@ export default function OtpScreen() {
           <Text style={[styles.resendLabel, { color: colors.mutedForeground }]}>
             Didn't receive?{' '}
           </Text>
-          {resendTimer > 0 ? (
+          {resendLoading ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : resendTimer > 0 ? (
             <Text style={[styles.resendTimer, { color: colors.mutedForeground }]}>
               Resend in {resendTimer}s
             </Text>
           ) : (
-            <Pressable onPress={() => { setResendTimer(30); setOtp(''); setError(''); }}>
+            <Pressable onPress={handleResend}>
               <Text style={[styles.resendLink, { color: colors.primary }]}>Resend OTP</Text>
             </Pressable>
           )}
@@ -194,15 +240,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '700', fontFamily: 'Inter_700Bold', textAlign: 'center' },
   subtitle: { fontSize: 15, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
   target: { fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
-  mockNote: { fontSize: 12, fontFamily: 'Inter_400Regular' },
-  boxRow: { flexDirection: 'row', gap: 14, marginVertical: 8 },
+  boxRow: { flexDirection: 'row', gap: 10, marginVertical: 8 },
   otpBox: {
-    width: 64, height: 64, borderWidth: 2, borderRadius: 14,
+    width: 48, height: 56, borderWidth: 2, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
   },
-  otpChar: { fontSize: 26, fontWeight: '700', fontFamily: 'Inter_700Bold' },
+  otpChar: { fontSize: 22, fontWeight: '700', fontFamily: 'Inter_700Bold' },
   hiddenInput: { position: 'absolute', opacity: 0, height: 1, width: 1, left: -9999 },
-  error: { fontSize: 13, fontFamily: 'Inter_500Medium' },
+  error: { fontSize: 13, fontFamily: 'Inter_500Medium', textAlign: 'center' },
   verifyBtn: {
     width: '100%', height: 54, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center', marginTop: 8,

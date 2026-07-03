@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -10,12 +11,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,7 +25,17 @@ import { useColors } from '@/hooks/useColors';
 
 type Tab = 'phone' | 'email';
 
-function PrimaryButton({ label, onPress }: { label: string; onPress: () => void }) {
+const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+
+function PrimaryButton({
+  label,
+  onPress,
+  loading,
+}: {
+  label: string;
+  onPress: () => void;
+  loading?: boolean;
+}) {
   const scale = useSharedValue(1);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -31,28 +43,15 @@ function PrimaryButton({ label, onPress }: { label: string; onPress: () => void 
     <Pressable
       onPressIn={() => { scale.value = withSpring(0.97, { damping: 15 }); }}
       onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
-      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onPress(); }}
+      onPress={() => { if (!loading) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onPress(); } }}
+      disabled={loading}
     >
-      <Animated.View style={[styles.primaryBtn, style]}>
-        <Text style={styles.primaryBtnText}>{label}</Text>
-      </Animated.View>
-    </Pressable>
-  );
-}
-
-function SocialButton({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
-  const scale = useSharedValue(1);
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
-  return (
-    <Pressable
-      onPressIn={() => { scale.value = withSpring(0.97, { damping: 15 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
-      onPress={onPress}
-    >
-      <Animated.View style={[styles.socialBtn, style]}>
-        {icon}
-        <Text style={styles.socialBtnText}>{label}</Text>
+      <Animated.View style={[styles.primaryBtn, style, loading && { opacity: 0.7 }]}>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.primaryBtnText}>{label}</Text>
+        )}
       </Animated.View>
     </Pressable>
   );
@@ -61,33 +60,52 @@ function SocialButton({ icon, label, onPress }: { icon: React.ReactNode; label: 
 export default function LoginScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<Tab>('phone');
-  const [phone, setPhone] = useState('');
+  const [activeTab] = useState<Tab>('email');
+  const [phone] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(false);
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  function handleContinue() {
+  async function handleContinue() {
+    setError('');
+
     if (activeTab === 'phone') {
       if (!/^\d{10}$/.test(phone.trim())) {
         setError('Enter a valid 10-digit mobile number');
         return;
       }
-    } else {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-        setError('Enter a valid email address');
+      // SMS not yet supported — guide user to email
+      setError('Phone OTP is not available yet. Please use Email login.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? 'Failed to send OTP. Please try again.');
         return;
       }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.push({ pathname: '/otp', params: { email: email.trim().toLowerCase() } });
+    } catch {
+      setError('Network error. Please check your connection.');
+    } finally {
+      setLoading(false);
     }
-    setError('');
-    router.push({ pathname: '/otp', params: activeTab === 'phone' ? { phone } : { email } });
-  }
-
-  function handleGoogleLogin() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({ pathname: '/otp', params: { email: 'demo@mediwholesale.in' } });
   }
 
   return (
@@ -121,73 +139,26 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        {/* Tab selector */}
-        <View style={[styles.tabRow, { borderColor: colors.border }]}>
-          {(['phone', 'email'] as Tab[]).map((tab) => (
-            <Pressable
-              key={tab}
-              style={[styles.tabBtn, activeTab === tab && { backgroundColor: colors.primary }]}
-              onPress={() => { setActiveTab(tab); setError(''); Haptics.selectionAsync(); }}
-            >
-              <Text style={[styles.tabBtnText, activeTab === tab ? { color: '#FFFFFF' } : { color: colors.mutedForeground }]}>
-                {tab === 'phone' ? 'Mobile Number' : 'Email'}
-              </Text>
-            </Pressable>
-          ))}
+        {/* Email input */}
+        <View style={[styles.inputRow, { borderColor: error ? colors.destructive : colors.border, backgroundColor: colors.card }]}>
+          <Ionicons name="mail-outline" size={20} color={colors.mutedForeground} style={{ marginLeft: 16 }} />
+          <TextInput
+            style={[styles.input, { color: colors.foreground, flex: 1 }]}
+            placeholder="Enter email address"
+            placeholderTextColor={colors.mutedForeground}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={(t) => { setEmail(t); setError(''); }}
+          />
         </View>
-
-        {/* Input */}
-        {activeTab === 'phone' ? (
-          <View style={[styles.inputRow, { borderColor: error ? colors.destructive : colors.border, backgroundColor: colors.card }]}>
-            <View style={styles.countryCode}>
-              <Text style={styles.flag}>🇮🇳</Text>
-              <Text style={[styles.code, { color: colors.foreground }]}>+91</Text>
-              <Ionicons name="chevron-down" size={14} color={colors.mutedForeground} />
-            </View>
-            <View style={styles.inputDivider} />
-            <TextInput
-              style={[styles.input, { color: colors.foreground }]}
-              placeholder="Enter mobile number"
-              placeholderTextColor={colors.mutedForeground}
-              keyboardType="number-pad"
-              maxLength={10}
-              value={phone}
-              onChangeText={(t) => { setPhone(t); setError(''); }}
-            />
-          </View>
-        ) : (
-          <View style={[styles.inputRow, { borderColor: error ? colors.destructive : colors.border, backgroundColor: colors.card }]}>
-            <Ionicons name="mail-outline" size={20} color={colors.mutedForeground} style={{ marginLeft: 16 }} />
-            <TextInput
-              style={[styles.input, { color: colors.foreground, flex: 1 }]}
-              placeholder="Enter email address"
-              placeholderTextColor={colors.mutedForeground}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={(t) => { setEmail(t); setError(''); }}
-            />
-          </View>
-        )}
 
         {!!error && <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>}
 
         <PrimaryButton
-          label={activeTab === 'phone' ? 'Send OTP' : 'Continue'}
+          label="Send OTP"
           onPress={handleContinue}
-        />
-
-        {/* Divider */}
-        <View style={styles.dividerRow}>
-          <View style={[styles.line, { backgroundColor: colors.border }]} />
-          <Text style={[styles.orText, { color: colors.mutedForeground }]}>or continue with</Text>
-          <View style={[styles.line, { backgroundColor: colors.border }]} />
-        </View>
-
-        <SocialButton
-          icon={<MaterialCommunityIcons name="google" size={20} color="#EA4335" />}
-          label="Continue with Google"
-          onPress={handleGoogleLogin}
+          loading={loading}
         />
 
         <View style={styles.registerRow}>
@@ -229,11 +200,6 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 13, fontFamily: 'Inter_500Medium', marginTop: -8 },
   primaryBtn: { backgroundColor: '#0F9D58', borderRadius: 14, height: 54, alignItems: 'center', justifyContent: 'center', shadowColor: '#0F9D58', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 },
   primaryBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600', fontFamily: 'Inter_600SemiBold', letterSpacing: 0.3 },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
-  line: { flex: 1, height: 1 },
-  orText: { fontSize: 13, fontFamily: 'Inter_400Regular' },
-  socialBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14, height: 54, backgroundColor: '#FFFFFF' },
-  socialBtnText: { fontSize: 15, fontWeight: '500', color: '#1A1A2E', fontFamily: 'Inter_500Medium' },
   registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 4 },
   registerText: { fontSize: 14, fontFamily: 'Inter_400Regular' },
   registerLink: { fontSize: 14, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
