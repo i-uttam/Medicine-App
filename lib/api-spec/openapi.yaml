@@ -3,20 +3,34 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Pharma App API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: categories
+    description: Medicine categories
+  - name: medicines
+    description: Medicine catalog
+  - name: auth
+    description: User authentication
+  - name: users
+    description: User profile
+  - name: cart
+    description: Shopping cart
+  - name: wishlist
+    description: Wishlist
+  - name: orders
+    description: Orders
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +38,408 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── Categories ──────────────────────────────────────────────────────────────
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+
+  /categories/{id}/medicines:
+    get:
+      operationId: getMedicinesByCategory
+      tags: [categories]
+      summary: List medicines in a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of medicines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Medicine"
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Medicines ────────────────────────────────────────────────────────────────
+  /medicines:
+    get:
+      operationId: listMedicines
+      tags: [medicines]
+      summary: List medicines with optional filters
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name, brand, or generic name
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+        - name: prescriptionRequired
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of medicines
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicineListResponse"
+
+  /medicines/{id}:
+    get:
+      operationId: getMedicine
+      tags: [medicines]
+      summary: Get a single medicine by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Medicine detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Medicine"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Auth ─────────────────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login or register by phone number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: User found or created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ── Users ─────────────────────────────────────────────────────────────────────
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ── Cart ─────────────────────────────────────────────────────────────────────
+  /cart/{userId}:
+    get:
+      operationId: getCart
+      tags: [cart]
+      summary: Get cart items for a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cart items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CartItem"
+    delete:
+      operationId: clearCart
+      tags: [cart]
+      summary: Clear all cart items for a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cart cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /cart:
+    post:
+      operationId: addToCart
+      tags: [cart]
+      summary: Add item to cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddToCartRequest"
+      responses:
+        "201":
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItem"
+
+  /cart/item/{id}:
+    patch:
+      operationId: updateCartItem
+      tags: [cart]
+      summary: Update cart item quantity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCartItemRequest"
+      responses:
+        "200":
+          description: Updated cart item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItem"
+    delete:
+      operationId: removeCartItem
+      tags: [cart]
+      summary: Remove item from cart
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Item removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── Wishlist ──────────────────────────────────────────────────────────────────
+  /wishlist/{userId}:
+    get:
+      operationId: getWishlist
+      tags: [wishlist]
+      summary: Get wishlist for a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Wishlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WishlistItem"
+
+  /wishlist:
+    post:
+      operationId: addToWishlist
+      tags: [wishlist]
+      summary: Add item to wishlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddToWishlistRequest"
+      responses:
+        "201":
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WishlistItem"
+
+  /wishlist/{id}:
+    delete:
+      operationId: removeWishlistItem
+      tags: [wishlist]
+      summary: Remove item from wishlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Item removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── Orders ────────────────────────────────────────────────────────────────────
+  /orders/user/{userId}:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: Get orders for a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrderSummary"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get order detail with items
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order with items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders:
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create a new order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDetail"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +447,307 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, name, createdAt]
+
+    Medicine:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        genericName:
+          type: string
+          nullable: true
+        brand:
+          type: string
+        strength:
+          type: string
+          nullable: true
+        packSize:
+          type: string
+          nullable: true
+        manufacturer:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        composition:
+          type: string
+          nullable: true
+        uses:
+          type: string
+          nullable: true
+        dosage:
+          type: string
+          nullable: true
+        sideEffects:
+          type: string
+          nullable: true
+        storage:
+          type: string
+          nullable: true
+        mrp:
+          type: string
+        wholesalePrice:
+          type: string
+        discount:
+          type: string
+          nullable: true
+        gstRate:
+          type: string
+          nullable: true
+        stock:
+          type: integer
+        minOrderQty:
+          type: integer
+        prescriptionRequired:
+          type: boolean
+        categoryId:
+          type: integer
+          nullable: true
+        iconName:
+          type: string
+          nullable: true
+        iconColor:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, name, brand, mrp, wholesalePrice, stock, minOrderQty, prescriptionRequired, createdAt]
+
+    MedicineListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Medicine"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required: [data, total, limit, offset]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        phone:
+          type: string
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, phone, createdAt]
+
+    LoginRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        name:
+          type: string
+      required: [phone]
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        medicineId:
+          type: integer
+        qty:
+          type: integer
+        medicine:
+          $ref: "#/components/schemas/Medicine"
+        createdAt:
+          type: string
+      required: [id, userId, medicineId, qty, createdAt]
+
+    AddToCartRequest:
+      type: object
+      properties:
+        userId:
+          type: integer
+        medicineId:
+          type: integer
+        qty:
+          type: integer
+      required: [userId, medicineId, qty]
+
+    UpdateCartItemRequest:
+      type: object
+      properties:
+        qty:
+          type: integer
+      required: [qty]
+
+    WishlistItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        medicineId:
+          type: integer
+        medicine:
+          $ref: "#/components/schemas/Medicine"
+        createdAt:
+          type: string
+      required: [id, userId, medicineId, createdAt]
+
+    AddToWishlistRequest:
+      type: object
+      properties:
+        userId:
+          type: integer
+        medicineId:
+          type: integer
+      required: [userId, medicineId]
+
+    OrderSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        status:
+          type: string
+        subtotal:
+          type: string
+        gstAmount:
+          type: string
+        deliveryCharge:
+          type: string
+        total:
+          type: string
+        createdAt:
+          type: string
+      required: [id, userId, status, subtotal, gstAmount, deliveryCharge, total, createdAt]
+
+    OrderDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        status:
+          type: string
+        subtotal:
+          type: string
+        gstAmount:
+          type: string
+        deliveryCharge:
+          type: string
+        total:
+          type: string
+        deliveryAddress:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItemDetail"
+        createdAt:
+          type: string
+      required: [id, userId, status, subtotal, gstAmount, deliveryCharge, total, items, createdAt]
+
+    OrderItemDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        medicineId:
+          type: integer
+        qty:
+          type: integer
+        price:
+          type: string
+        medicine:
+          $ref: "#/components/schemas/Medicine"
+      required: [id, medicineId, qty, price]
+
+    CreateOrderRequest:
+      type: object
+      properties:
+        userId:
+          type: integer
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              medicineId:
+                type: integer
+              qty:
+                type: integer
+            required: [medicineId, qty]
+        deliveryAddress:
+          type: string
+        notes:
+          type: string
+      required: [userId, items]
