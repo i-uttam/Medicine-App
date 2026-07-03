@@ -102,7 +102,11 @@ export default function ProfileScreen() {
             <View style={styles.avatarWrap}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
-                  {profile.businessName.slice(0, 2).toUpperCase()}
+                  {profile.businessName
+                    ? profile.businessName.slice(0, 2).toUpperCase()
+                    : profile.phone
+                    ? profile.phone.slice(-2)
+                    : 'RX'}
                 </Text>
               </View>
             </View>
@@ -114,8 +118,8 @@ export default function ProfileScreen() {
               <Text style={styles.editToggleText}>{editing ? 'Save' : 'Edit'}</Text>
             </Pressable>
           </View>
-          <Text style={styles.profileName}>{profile.businessName}</Text>
-          <Text style={styles.profileType}>{profile.drugLicense}</Text>
+          <Text style={styles.profileName}>{profile.businessName || 'Your Business'}</Text>
+          <Text style={styles.profileType}>{profile.drugLicense || 'Complete your profile'}</Text>
 
           {/* Stats */}
           <View style={styles.profileStats}>

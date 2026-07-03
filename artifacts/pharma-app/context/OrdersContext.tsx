@@ -1,11 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import type { CartItem } from '@/context/CartContext';
 
 export type OrderStatus = 'Pending' | 'Accepted' | 'Packed' | 'Dispatched' | 'Delivered' | 'Cancelled';
 
 export type OrderItem = {
-  medicineId: string;
+  id: number;
+  medicineId: number;
   medicineName: string;
   brand: string;
   qty: number;
@@ -13,7 +14,8 @@ export type OrderItem = {
 };
 
 export type Order = {
-  id: string;
+  id: number;
+  displayId: string;
   date: string;
   items: OrderItem[];
   subtotal: number;
@@ -27,123 +29,163 @@ export type Order = {
 
 type OrdersContextType = {
   orders: Order[];
-  placeOrder: (
-    cartItems: CartItem[],
-    address: string,
-    paymentMethod: string,
-  ) => Promise<string>;
+  isLoading: boolean;
+  error: string | null;
+  placeOrder: (cartItems: CartItem[], address: string, payment: string) => Promise<number>;
+  cancelOrder: (orderId: number) => Promise<void>;
   getOrder: (id: string) => Order | undefined;
-  cancelOrder: (id: string) => void;
+  refresh: () => Promise<void>;
 };
 
 const OrdersContext = createContext<OrdersContextType | null>(null);
-const ORDERS_KEY = '@pharma_orders';
 
-const SEED_ORDERS: Order[] = [
-  {
-    id: 'ORD-20260628-001',
-    date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    items: [
-      { medicineId: 'm001', medicineName: 'Paracetamol 500mg', brand: 'Calpol', qty: 10, price: 38 },
-      { medicineId: 'm003', medicineName: 'Metformin 500mg', brand: 'Glycomet', qty: 20, price: 32 },
-      { medicineId: 'm006', medicineName: 'Omeprazole 20mg', brand: 'Omez', qty: 10, price: 44 },
-    ],
-    subtotal: 1500, gst: 180, delivery: 0, total: 1680,
-    status: 'Dispatched', address: '12, Medicines Lane, Dharavi, Mumbai - 400017',
-    paymentMethod: 'Credit Account',
-  },
-  {
-    id: 'ORD-20260620-002',
-    date: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-    items: [
-      { medicineId: 'm018', medicineName: 'Vitamin C 500mg', brand: 'Limcee', qty: 20, price: 26 },
-      { medicineId: 'm019', medicineName: 'Calcium + Vitamin D3', brand: 'Shelcal-500', qty: 10, price: 82 },
-    ],
-    subtotal: 1340, gst: 67, delivery: 0, total: 1407,
-    status: 'Delivered', address: '12, Medicines Lane, Dharavi, Mumbai - 400017',
-    paymentMethod: 'UPI',
-  },
-];
+const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+
+function formatOrderId(id: number): string {
+  return `ORD-${String(id).padStart(6, '0')}`;
+}
+
+function mapApiOrder(raw: any): Order {
+  return {
+    id: raw.id,
+    displayId: formatOrderId(raw.id),
+    date: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
+    items: (raw.items ?? []).map((item: any) => ({
+      id: item.id,
+      medicineId: item.medicineId ?? item.medicine_id,
+      medicineName: item.medicine?.name ?? '',
+      brand: item.medicine?.brand ?? '',
+      qty: item.qty,
+      price: parseFloat(item.price) || 0,
+    })),
+    subtotal: parseFloat(raw.subtotal) || 0,
+    gst: parseFloat(raw.gstAmount ?? raw.gst_amount) || 0,
+    delivery: parseFloat(raw.deliveryCharge ?? raw.delivery_charge) || 0,
+    total: parseFloat(raw.total) || 0,
+    status: raw.status as OrderStatus,
+    address: raw.deliveryAddress ?? raw.delivery_address ?? '',
+    paymentMethod: raw.notes ?? '',
+  };
+}
 
 export function OrdersProvider({ children }: { children: React.ReactNode }) {
+  const { userId, isAuthenticated } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const loadedForUserRef = useRef<number | null | undefined>(undefined);
+
+  async function fetchOrders(uid: number) {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/orders/user/${uid}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `Server error ${res.status}`);
+      }
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data.map(mapApiOrder) : []);
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to load orders');
+      setOrders([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
-    AsyncStorage.getItem(ORDERS_KEY).then((s) => {
-      if (s) {
-        const parsed = JSON.parse(s);
-        setOrders(parsed.length > 0 ? parsed : SEED_ORDERS);
-      } else {
-        setOrders(SEED_ORDERS);
-        AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(SEED_ORDERS)).catch(() => {});
-      }
-    }).catch(() => setOrders(SEED_ORDERS));
-  }, []);
+    if (!isAuthenticated || userId == null) {
+      setOrders([]);
+      loadedForUserRef.current = undefined;
+      return;
+    }
+    if (loadedForUserRef.current === userId) return;
+    loadedForUserRef.current = userId;
+    fetchOrders(userId);
+  }, [isAuthenticated, userId]);
 
-  const placeOrder = useCallback(
-    async (cartItems: CartItem[], address: string, paymentMethod: string): Promise<string> => {
-      const subtotal = cartItems.reduce((s, i) => s + i.medicine.wholesalePrice * i.qty, 0);
-      const gstRate = 0.12;
-      const gst = Math.round(subtotal * gstRate);
-      const delivery = subtotal >= 2000 ? 0 : 60;
-      const total = subtotal + gst + delivery;
-      const id = `ORD-${Date.now()}`;
+  const refresh = useCallback(async () => {
+    if (userId == null) return;
+    await fetchOrders(userId);
+  }, [userId]);
 
-      const order: Order = {
-        id,
-        date: new Date().toISOString(),
-        items: cartItems.map((i) => ({
-          medicineId: i.medicine.id,
-          medicineName: i.medicine.name,
-          brand: i.medicine.brand,
-          qty: i.qty,
-          price: i.medicine.wholesalePrice,
-        })),
-        subtotal, gst, delivery, total,
-        status: 'Pending',
-        address,
-        paymentMethod,
-      };
+  const placeOrder = useCallback(async (
+    cartItems: CartItem[],
+    address: string,
+    payment: string,
+  ): Promise<number> => {
+    if (userId == null) throw new Error('Not authenticated');
 
-      setOrders((prev) => {
-        const updated = [order, ...prev];
-        AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updated)).catch(() => {});
-        return updated;
-      });
+    const medicinesRes = await fetch(`${API_BASE}/medicines?limit=200`);
+    if (!medicinesRes.ok) throw new Error('Failed to load medicine catalog');
+    const medicinesData = await medicinesRes.json();
+    const medicineList: any[] = medicinesData.data ?? medicinesData ?? [];
 
-      // Simulate order progression
-      setTimeout(() => {
-        setOrders((prev) => {
-          const updated = prev.map((o) => o.id === id ? { ...o, status: 'Accepted' as OrderStatus } : o);
-          AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updated)).catch(() => {});
-          return updated;
-        });
-      }, 8000);
+    const nameMap = new Map<string, number>();
+    for (const m of medicineList) {
+      nameMap.set(`${m.name}|${m.brand}`, m.id);
+    }
 
-      return id;
-    },
-    [],
-  );
+    const apiItems = cartItems
+      .map((ci) => ({
+        medicineId: nameMap.get(`${ci.medicine.name}|${ci.medicine.brand}`) ?? 0,
+        qty: ci.qty,
+      }))
+      .filter((i) => i.medicineId > 0);
+
+    if (apiItems.length === 0) {
+      throw new Error('Could not match medicines to the database. Please run the seed script.');
+    }
+
+    const res = await fetch(`${API_BASE}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        items: apiItems,
+        deliveryAddress: address,
+        notes: payment,
+      }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error ?? `Failed to place order (${res.status})`);
+    }
+
+    const rawOrder = await res.json();
+    const newOrder = mapApiOrder(rawOrder);
+    setOrders((prev) => [newOrder, ...prev]);
+    return newOrder.id;
+  }, [userId]);
+
+  const cancelOrder = useCallback(async (orderId: number) => {
+    if (userId == null) throw new Error('Not authenticated');
+
+    const res = await fetch(`${API_BASE}/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Cancelled', userId }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error ?? 'Failed to cancel order');
+    }
+
+    const rawOrder = await res.json();
+    const updated = mapApiOrder(rawOrder);
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+  }, [userId]);
 
   const getOrder = useCallback(
-    (id: string) => orders.find((o) => o.id === id),
+    (id: string) => orders.find((o) => o.id.toString() === id),
     [orders],
   );
 
-  const cancelOrder = useCallback((id: string) => {
-    setOrders((prev) => {
-      const updated = prev.map((o) =>
-        o.id === id && ['Pending', 'Accepted'].includes(o.status)
-          ? { ...o, status: 'Cancelled' as OrderStatus }
-          : o,
-      );
-      AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(updated)).catch(() => {});
-      return updated;
-    });
-  }, []);
-
   return (
-    <OrdersContext.Provider value={{ orders, placeOrder, getOrder, cancelOrder }}>
+    <OrdersContext.Provider value={{ orders, isLoading, error, placeOrder, cancelOrder, getOrder, refresh }}>
       {children}
     </OrdersContext.Provider>
   );

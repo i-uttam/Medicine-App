@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/context/AuthContext';
 
 type WishlistContextType = {
   ids: string[];
@@ -8,26 +9,34 @@ type WishlistContextType = {
 };
 
 const WishlistContext = createContext<WishlistContextType | null>(null);
-const WISHLIST_KEY = '@pharma_wishlist';
+
+function wishlistKey(userId: number | null): string {
+  return userId != null ? `@pharma_wishlist_${userId}` : '@pharma_wishlist_guest';
+}
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
+  const { userId } = useAuth();
   const [ids, setIds] = useState<string[]>([]);
+  const [loadedUserId, setLoadedUserId] = useState<number | null | undefined>(undefined);
 
   useEffect(() => {
-    AsyncStorage.getItem(WISHLIST_KEY).then((s) => {
+    if (loadedUserId === userId) return;
+    setLoadedUserId(userId);
+    setIds([]);
+    AsyncStorage.getItem(wishlistKey(userId)).then((s) => {
       if (s) setIds(JSON.parse(s));
     }).catch(() => {});
-  }, []);
+  }, [userId]);
 
   const toggle = useCallback((medicineId: string) => {
     setIds((prev) => {
       const updated = prev.includes(medicineId)
         ? prev.filter((id) => id !== medicineId)
         : [...prev, medicineId];
-      AsyncStorage.setItem(WISHLIST_KEY, JSON.stringify(updated)).catch(() => {});
+      AsyncStorage.setItem(wishlistKey(userId), JSON.stringify(updated)).catch(() => {});
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const isWishlisted = useCallback(
     (medicineId: string) => ids.includes(medicineId),

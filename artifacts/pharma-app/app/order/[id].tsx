@@ -103,7 +103,7 @@ export default function OrderDetailScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.orderId, { color: colors.foreground }]}>{order.id}</Text>
+          <Text style={[styles.orderId, { color: colors.foreground }]}>{order.displayId}</Text>
           <Text style={[styles.orderDate, { color: colors.mutedForeground }]}>
             {new Date(order.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </Text>
@@ -237,7 +237,7 @@ export default function OrderDetailScreen() {
         ) : !isCancelled && ['Pending', 'Accepted'].includes(order.status) ? (
           <Pressable
             style={[styles.actionBtn, { backgroundColor: colors.destructive }]}
-            onPress={() => { cancelOrder(order.id); router.replace('/(tabs)/orders'); }}
+            onPress={() => { cancelOrder(order.id).then(() => router.replace('/(tabs)/orders')); }}
           >
             <Ionicons name="close-outline" size={20} color="#FFF" />
             <Text style={styles.actionBtnText}>Cancel Order</Text>

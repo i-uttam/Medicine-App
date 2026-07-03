@@ -30,7 +30,7 @@ function OrderCard({ order }: { order: Order }) {
     >
       <View style={styles.orderTop}>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.orderId, { color: colors.foreground }]}>{order.id}</Text>
+          <Text style={[styles.orderId, { color: colors.foreground }]}>{order.displayId}</Text>
           <Text style={[styles.orderDate, { color: colors.mutedForeground }]}>
             {new Date(order.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
             {' · '}{order.items.length} item{order.items.length !== 1 ? 's' : ''}
@@ -86,7 +86,7 @@ function OrderCard({ order }: { order: Order }) {
 export default function OrdersScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { orders } = useOrders();
+  const { orders, isLoading } = useOrders();
   const [filter, setFilter] = useState<'current' | 'past'>('current');
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;

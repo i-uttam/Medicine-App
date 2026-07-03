@@ -90,7 +90,7 @@ export default function OtpScreen() {
         return;
       }
 
-      await login(data.user?.phone ?? phone ?? '', data.user?.email ?? email ?? '');
+      await login(data.user?.id ?? 0, data.user?.phone ?? phone ?? '', data.user?.email ?? email ?? '');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)');
     } catch {

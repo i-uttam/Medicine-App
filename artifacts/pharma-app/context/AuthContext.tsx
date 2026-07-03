@@ -17,21 +17,22 @@ export type UserProfile = {
 const DEFAULT_PROFILE: UserProfile = {
   phone: '',
   email: '',
-  businessName: 'City Pharma Distributors',
-  ownerName: 'Rahul Sharma',
-  gstNumber: '27AADCC1234M1Z5',
-  drugLicense: 'MH-MUM-123456',
-  address: '12, Medicines Lane, Dharavi',
-  city: 'Mumbai',
-  state: 'Maharashtra',
-  pincode: '400017',
+  businessName: '',
+  ownerName: '',
+  gstNumber: '',
+  drugLicense: '',
+  address: '',
+  city: '',
+  state: '',
+  pincode: '',
 };
 
 type AuthContextType = {
   isAuthenticated: boolean;
   isLoading: boolean;
+  userId: number | null;
   profile: UserProfile;
-  login: (phone: string, email: string) => Promise<void>;
+  login: (userId: number, phone: string, email: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
 };
@@ -40,40 +41,52 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 const AUTH_KEY = '@pharma_auth';
 const PROFILE_KEY = '@pharma_profile';
+const USER_ID_KEY = '@pharma_user_id';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<number | null>(null);
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
 
   useEffect(() => {
     async function restore() {
       try {
-        const [authStr, profileStr] = await Promise.all([
+        const [authStr, profileStr, userIdStr] = await Promise.all([
           AsyncStorage.getItem(AUTH_KEY),
           AsyncStorage.getItem(PROFILE_KEY),
+          AsyncStorage.getItem(USER_ID_KEY),
         ]);
         if (authStr === 'true') setIsAuthenticated(true);
         if (profileStr) setProfile({ ...DEFAULT_PROFILE, ...JSON.parse(profileStr) });
+        if (userIdStr) setUserId(parseInt(userIdStr, 10));
       } catch {}
       setIsLoading(false);
     }
     restore();
   }, []);
 
-  async function login(phone: string, email: string) {
+  async function login(newUserId: number, phone: string, email: string) {
     const updatedProfile = { ...profile, phone, email };
     setProfile(updatedProfile);
     setIsAuthenticated(true);
+    setUserId(newUserId);
     await Promise.all([
       AsyncStorage.setItem(AUTH_KEY, 'true'),
       AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updatedProfile)),
+      AsyncStorage.setItem(USER_ID_KEY, newUserId.toString()),
     ]);
   }
 
   async function logout() {
     setIsAuthenticated(false);
-    await AsyncStorage.removeItem(AUTH_KEY);
+    setUserId(null);
+    setProfile(DEFAULT_PROFILE);
+    await Promise.all([
+      AsyncStorage.removeItem(AUTH_KEY),
+      AsyncStorage.removeItem(USER_ID_KEY),
+      AsyncStorage.removeItem(PROFILE_KEY),
+    ]);
   }
 
   async function updateProfile(data: Partial<UserProfile>) {
@@ -83,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, profile, login, logout, updateProfile }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, userId, profile, login, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

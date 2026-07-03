@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Medicine } from '@/data/medicines';
+import { useAuth } from '@/context/AuthContext';
 
 export type CartItem = {
   medicine: Medicine;
@@ -19,20 +20,28 @@ type CartContextType = {
 };
 
 const CartContext = createContext<CartContextType | null>(null);
-const CART_KEY = '@pharma_cart';
+
+function cartKey(userId: number | null): string {
+  return userId != null ? `@pharma_cart_${userId}` : '@pharma_cart_guest';
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { userId } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
+  const [loadedUserId, setLoadedUserId] = useState<number | null | undefined>(undefined);
 
   useEffect(() => {
-    AsyncStorage.getItem(CART_KEY).then((s) => {
+    if (loadedUserId === userId) return;
+    setLoadedUserId(userId);
+    setItems([]);
+    AsyncStorage.getItem(cartKey(userId)).then((s) => {
       if (s) setItems(JSON.parse(s));
     }).catch(() => {});
-  }, []);
+  }, [userId]);
 
   function persist(updated: CartItem[]) {
     setItems(updated);
-    AsyncStorage.setItem(CART_KEY, JSON.stringify(updated)).catch(() => {});
+    AsyncStorage.setItem(cartKey(userId), JSON.stringify(updated)).catch(() => {});
   }
 
   const addItem = useCallback((medicine: Medicine, qty = 1) => {
@@ -46,18 +55,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       } else {
         updated = [...prev, { medicine, qty }];
       }
-      AsyncStorage.setItem(CART_KEY, JSON.stringify(updated)).catch(() => {});
+      AsyncStorage.setItem(cartKey(userId), JSON.stringify(updated)).catch(() => {});
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const removeItem = useCallback((medicineId: string) => {
     setItems((prev) => {
       const updated = prev.filter((i) => i.medicine.id !== medicineId);
-      AsyncStorage.setItem(CART_KEY, JSON.stringify(updated)).catch(() => {});
+      AsyncStorage.setItem(cartKey(userId), JSON.stringify(updated)).catch(() => {});
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const updateQty = useCallback((medicineId: string, qty: number) => {
     setItems((prev) => {
@@ -67,14 +76,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           : prev.map((i) =>
               i.medicine.id === medicineId ? { ...i, qty } : i,
             );
-      AsyncStorage.setItem(CART_KEY, JSON.stringify(updated)).catch(() => {});
+      AsyncStorage.setItem(cartKey(userId), JSON.stringify(updated)).catch(() => {});
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const clearCart = useCallback(() => {
     persist([]);
-  }, []);
+  }, [userId]);
 
   const getItemQty = useCallback(
     (medicineId: string) =>

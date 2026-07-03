@@ -24,7 +24,25 @@ router.get("/orders/user/:userId", async (req, res) => {
     .where(eq(ordersTable.userId, userId))
     .orderBy(sql`${ordersTable.createdAt} desc`);
 
-  res.json(orders);
+  const ordersWithItems = await Promise.all(
+    orders.map(async (order) => {
+      const items = await db
+        .select({
+          id: orderItemsTable.id,
+          medicineId: orderItemsTable.medicineId,
+          qty: orderItemsTable.qty,
+          price: orderItemsTable.price,
+          medicine: medicinesTable,
+        })
+        .from(orderItemsTable)
+        .leftJoin(medicinesTable, eq(orderItemsTable.medicineId, medicinesTable.id))
+        .where(eq(orderItemsTable.orderId, order.id));
+
+      return { ...order, items };
+    }),
+  );
+
+  res.json(ordersWithItems);
 });
 
 // GET /api/orders/:id
@@ -61,6 +79,64 @@ router.get("/orders/:id", async (req, res) => {
   res.json({ ...orderRows[0], items });
 });
 
+// PATCH /api/orders/:id  — update order status (e.g. cancel)
+router.patch("/orders/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid order ID" });
+    return;
+  }
+
+  const { status, userId } = req.body as { status?: string; userId?: number };
+
+  if (!status) {
+    res.status(400).json({ error: "status is required" });
+    return;
+  }
+
+  const validStatuses = ["Pending", "Accepted", "Packed", "Dispatched", "Delivered", "Cancelled"];
+  if (!validStatuses.includes(status)) {
+    res.status(400).json({ error: `status must be one of: ${validStatuses.join(", ")}` });
+    return;
+  }
+
+  const orderRows = await db
+    .select()
+    .from(ordersTable)
+    .where(eq(ordersTable.id, id))
+    .limit(1);
+
+  if (orderRows.length === 0) {
+    res.status(404).json({ error: "Order not found" });
+    return;
+  }
+
+  if (userId !== undefined && orderRows[0].userId !== userId) {
+    res.status(403).json({ error: "Not authorized to modify this order" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(ordersTable)
+    .set({ status: status as any, updatedAt: new Date() })
+    .where(eq(ordersTable.id, id))
+    .returning();
+
+  const items = await db
+    .select({
+      id: orderItemsTable.id,
+      medicineId: orderItemsTable.medicineId,
+      qty: orderItemsTable.qty,
+      price: orderItemsTable.price,
+      medicine: medicinesTable,
+    })
+    .from(orderItemsTable)
+    .leftJoin(medicinesTable, eq(orderItemsTable.medicineId, medicinesTable.id))
+    .where(eq(orderItemsTable.orderId, id));
+
+  res.json({ ...updated, items });
+});
+
 // POST /api/orders
 router.post("/orders", async (req, res) => {
   const { userId, items, deliveryAddress, notes } = req.body as {
@@ -70,7 +146,6 @@ router.post("/orders", async (req, res) => {
     notes?: unknown;
   };
 
-  // --- Validate payload ---
   if (typeof userId !== "number" || !Number.isInteger(userId) || userId <= 0) {
     res.status(400).json({ error: "userId must be a positive integer" });
     return;
@@ -106,7 +181,6 @@ router.post("/orders", async (req, res) => {
 
   const typedItems = items as Array<{ medicineId: number; qty: number }>;
 
-  // --- Fetch medicine prices, verifying all IDs exist ---
   const medicineIds = typedItems.map((i) => i.medicineId);
   const medicines = await db
     .select({ id: medicinesTable.id, wholesalePrice: medicinesTable.wholesalePrice })
@@ -131,7 +205,6 @@ router.post("/orders", async (req, res) => {
   const deliveryCharge = subtotal > 2000 ? 0 : 49;
   const total = subtotal + gstAmount + deliveryCharge;
 
-  // --- Run atomically in a transaction ---
   const result = await db.transaction(async (tx) => {
     const [order] = await tx
       .insert(ordersTable)
@@ -160,7 +233,6 @@ router.post("/orders", async (req, res) => {
     return order;
   });
 
-  // Return full detail
   const fullItems = await db
     .select({
       id: orderItemsTable.id,

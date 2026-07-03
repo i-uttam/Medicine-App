@@ -1,0 +1,368 @@
+Remove ALL demo, mock, hardcoded, placeholder, seeded, and locally stored business data from the entire application and migrate the app to real Supabase data.
+
+IMPORTANT:
+A newly created user account is currently showing old/demo orders such as:
+- ORD-1783099641210
+- ORD-20260628-001
+- ₹194
+- ₹1,680
+
+This is incorrect.
+
+A new account must have ZERO orders and must show an empty state until that authenticated user actually places an order.
+
+STEP 1 — AUDIT THE ENTIRE PROJECT
+
+Search the complete codebase for:
+
+- mockData
+- demoData
+- dummyData
+- sampleData
+- fakeData
+- hardcoded arrays
+- static product arrays
+- static orders
+- sample orders
+- seeded frontend data
+- AsyncStorage demo data
+- local JSON business data
+- fallback demo data
+- placeholder database records
+- ORD-1783099641210
+- ORD-20260628-001
+- 194
+- 1680
+
+Also inspect all:
+- screens
+- components
+- hooks
+- services
+- API routes
+- backend routes
+- database seed files
+- JSON files
+- TypeScript files
+- JavaScript files
+
+Identify every place where real app data is currently mocked or hardcoded.
+
+STEP 2 — REMOVE ALL DEMO BUSINESS DATA
+
+Delete all demo/mock/hardcoded records used as real app content.
+
+Remove demo data for:
+
+- Orders
+- Cart
+- Wishlist
+- Addresses
+- Notifications
+- User profile
+- Products
+- Categories
+- Offers
+- Featured products
+- Inventory
+- Invoices
+
+Do not use hardcoded arrays as fallback data.
+
+For example, DO NOT do this:
+
+const orders = [
+  {
+    id: "ORD-20260628-001",
+    status: "Dispatched"
+  }
+];
+
+Also remove logic like:
+
+data || mockData
+orders.length ? orders : demoOrders
+
+The UI must never silently display demo data when Supabase returns empty data.
+
+STEP 3 — USE SUPABASE AS THE SINGLE SOURCE OF TRUTH
+
+Use Supabase as the primary database for all persistent application data.
+
+Keep UI configuration constants locally only when appropriate.
+
+Real business/user data must come from Supabase.
+
+Create or verify proper tables for:
+
+profiles
+categories
+products
+orders
+order_items
+cart_items
+wishlist_items
+addresses
+notifications
+
+Use proper foreign key relationships.
+
+STEP 4 — FIX USER DATA ISOLATION
+
+This is critical.
+
+Every user-specific record must be connected to the authenticated Supabase user ID.
+
+Use:
+
+auth.users.id
+
+as the identity source.
+
+For orders, store:
+
+user_id UUID NOT NULL
+
+The user_id must reference the authenticated user.
+
+When fetching orders, NEVER fetch every order.
+
+Incorrect:
+
+supabase
+  .from('orders')
+  .select('*')
+
+Correct logic:
+
+const {
+  data: { user }
+} = await supabase.auth.getUser();
+
+if (!user) {
+  return;
+}
+
+const { data, error } = await supabase
+  .from('orders')
+  .select(`
+    *,
+    order_items(*)
+  `)
+  .eq('user_id', user.id)
+  .order('created_at', { ascending: false });
+
+Only show orders belonging to the currently authenticated user.
+
+Apply the same user ownership logic to:
+
+cart_items
+wishlist_items
+addresses
+notifications
+profiles
+
+STEP 5 — ENABLE ROW LEVEL SECURITY
+
+Enable Supabase Row Level Security on every user-owned table.
+
+Create RLS policies so authenticated users can only access their own data.
+
+Example order SELECT policy logic:
+
+auth.uid() = user_id
+
+Create appropriate policies for:
+
+SELECT
+INSERT
+UPDATE
+DELETE
+
+For:
+- orders
+- order_items where ownership is validated through the parent order
+- cart_items
+- wishlist_items
+- addresses
+- notifications
+- profiles
+
+Never trust user_id sent from the frontend for authorization.
+
+Use auth.uid() in RLS policies.
+
+STEP 6 — CREATE REAL INITIAL CATALOG DATA
+
+After removing demo business data, create clean initial catalog data in Supabase.
+
+Add a small realistic pharmacy catalog for development/testing.
+
+Create categories such as:
+
+- Tablets
+- Capsules
+- Injections
+- Syrups
+- Cream & Gel
+- Surgical
+- Ayurvedic
+- Supplements
+
+Add approximately 15-20 realistic development products distributed across these categories.
+
+Each product should have fields such as:
+
+id
+name
+brand
+generic_name
+category_id
+description
+pack_size
+mrp
+selling_price
+stock_quantity
+requires_prescription
+is_featured
+is_active
+created_at
+updated_at
+
+IMPORTANT:
+These catalog products are shared public/store data.
+
+Do NOT assign catalog products to a user.
+
+Orders, cart, wishlist, addresses, notifications, and profiles are user-specific data.
+
+STEP 7 — NEW ACCOUNT BEHAVIOR
+
+For every newly registered user:
+
+Orders:
+Show ZERO orders.
+
+Display:
+
+"No orders yet"
+"Your placed orders will appear here."
+
+Cart:
+Empty.
+
+Wishlist:
+Empty.
+
+Addresses:
+Empty.
+
+Notifications:
+Empty unless a real system notification exists.
+
+Do not automatically create fake orders.
+
+Do not automatically create fake cart items.
+
+Do not automatically create fake wishlist items.
+
+STEP 8 — ORDER CREATION
+
+When a logged-in user places a real order:
+
+1. Get the authenticated Supabase user.
+2. Create an order linked to user.id.
+3. Create corresponding order_items.
+4. Save product price snapshots in order_items.
+5. Calculate totals on the trusted backend/server.
+6. Clear only that user's cart after successful order creation.
+7. Fetch the newly created order from Supabase.
+8. Display it in My Orders.
+
+Generate a unique human-readable order number on the backend/database.
+
+Do not generate order ownership from frontend input.
+
+STEP 9 — LOADING, EMPTY, AND ERROR STATES
+
+Every data-driven screen must have separate states:
+
+Loading state
+Empty state
+Error state
+Success state
+
+Do not show demo data while loading.
+
+Do not show demo data when an API request fails.
+
+For the My Orders screen:
+
+Loading:
+Show a loader or skeleton.
+
+Empty:
+Show "No orders yet".
+
+Error:
+Show an error message and Retry button.
+
+Success:
+Show only the authenticated user's real orders.
+
+STEP 10 — VERIFY SUPABASE CONNECTION
+
+Verify the application is actually reading and writing data from Supabase.
+
+Check:
+
+- Supabase URL configuration
+- anon/publishable key configuration
+- server database connection
+- authentication session
+- API routes
+- database queries
+
+Do not expose:
+- service_role key
+- database password
+- SUPABASE_DB_URL
+
+inside the Expo/React Native frontend.
+
+Server-only secrets must remain in Replit Secrets/server environment variables.
+
+STEP 11 — FINAL TEST
+
+Perform this test:
+
+User A:
+1. Register a new account.
+2. Open My Orders.
+3. Confirm ZERO orders.
+4. Add a product to cart.
+5. Place an order.
+6. Confirm the new order appears.
+
+User B:
+1. Register another new account.
+2. Open My Orders.
+3. Confirm ZERO orders.
+4. Confirm User A's order is NOT visible.
+5. Confirm User A's cart, wishlist, addresses, and notifications are NOT visible.
+
+Then log back into User A and confirm User A's order still exists.
+
+FINAL REQUIREMENT:
+
+Supabase must be the single source of truth for persistent business and user data.
+
+Remove all demo/mock/hardcoded business records from the application.
+
+A new user must never see another user's data or fake orders.
+
+Do not redesign the UI.
+Keep the current design and navigation unchanged.
+Only replace demo data with real Supabase-backed data and fix authenticated user data isolation.
+
+Before editing, inspect the existing database schema and existing Supabase integration. Reuse correct existing tables and migrations where possible instead of creating duplicate tables.

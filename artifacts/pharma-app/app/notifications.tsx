@@ -20,14 +20,11 @@ type Notification = {
 const NOTIF_KEY = '@pharma_notifications';
 
 const SEED_NOTIFS: Notification[] = [
-  { id: 'n1', type: 'order', title: 'Order Dispatched', body: 'Your order ORD-20260628-001 has been dispatched. Expected delivery in 1–2 days.', time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), read: false },
   { id: 'n2', type: 'offer', title: 'Flash Sale — 40% Extra Off', body: 'Antibiotics category is on sale today until midnight. Add to cart now before stock runs out!', time: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), read: false },
   { id: 'n3', type: 'restock', title: 'Restock Alert: Insulin Glargine', body: 'Insulin Glargine 100IU is back in stock. Min order: 5 vials.', time: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), read: false },
-  { id: 'n4', type: 'order', title: 'Order Delivered', body: 'Order ORD-20260620-002 has been delivered successfully. Rate your experience!', time: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(), read: true },
-  { id: 'n5', type: 'system', title: 'GST Invoice Ready', body: 'Your GST invoice for order ORD-20260620-002 is ready to download from My Orders.', time: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000).toISOString(), read: true },
   { id: 'n6', type: 'offer', title: 'Weekend Offer: Free Delivery', body: 'Free delivery on all orders above ₹1,000 this weekend only. Use code FREEDEL.', time: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), read: true },
   { id: 'n7', type: 'restock', title: 'Restock Alert: Atorvastatin 10mg', body: 'Atorvastatin 10mg (Lipitor) is available again. Only 800 strips in stock — order soon.', time: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), read: true },
-  { id: 'n8', type: 'system', title: 'Account Verified', body: 'Your drug license has been verified. You can now place orders without limits.', time: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(), read: true },
+  { id: 'n8', type: 'system', title: 'Welcome to Pharma Wholesale', body: 'Your account is active. Complete your business profile to start ordering.', time: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(), read: true },
 ];
 
 const TYPE_CONFIG: Record<NotifType, { icon: string; iconColor: string; bg: string }> = {
