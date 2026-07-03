@@ -136,7 +136,7 @@ export default function OtpScreen() {
           })}
         </Animated.View>
 
-        {/* Hidden input */}
+        {/* Hidden input — positioned off-screen so it works on web too */}
         <TextInput
           ref={inputRef}
           style={styles.hiddenInput}
@@ -147,7 +147,7 @@ export default function OtpScreen() {
             setError('');
             setOtp(t.replace(/\D/g, ''));
           }}
-          caretHidden
+          autoFocus
         />
 
         {error ? (
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   otpChar: { fontSize: 26, fontWeight: '700', fontFamily: 'Inter_700Bold' },
-  hiddenInput: { position: 'absolute', opacity: 0, height: 0, width: 0 },
+  hiddenInput: { position: 'absolute', opacity: 0, height: 1, width: 1, left: -9999 },
   error: { fontSize: 13, fontFamily: 'Inter_500Medium' },
   verifyBtn: {
     width: '100%', height: 54, borderRadius: 14,

@@ -14,7 +14,7 @@ const THEME_KEY = '@pharma_theme';
 export const ThemeContext = createContext<ThemeContextType | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [preference, setPreferenceState] = useState<ThemePreference>('system');
+  const [preference, setPreferenceState] = useState<ThemePreference>('light');
   const systemScheme = useColorScheme();
   const isDark =
     preference === 'dark' ||

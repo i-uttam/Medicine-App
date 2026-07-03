@@ -41,7 +41,13 @@ export default function ProfileScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    if (Platform.OS === 'web') {
+      // Alert.alert doesn't work on web — log out directly
+      await logout();
+      router.replace('/login');
+      return;
+    }
     Alert.alert('Log Out', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
       {
