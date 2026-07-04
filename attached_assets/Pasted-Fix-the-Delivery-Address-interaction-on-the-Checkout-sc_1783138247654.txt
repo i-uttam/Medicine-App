@@ -1,0 +1,228 @@
+Fix the Delivery Address interaction on the Checkout screen.
+
+CURRENT BUG:
+On the Checkout screen, the Delivery Address section becomes editable immediately when the user taps the address text or address card.
+
+For example, tapping:
+"Kanti kothiya, bihar"
+
+immediately allows the user to edit the address.
+
+This is incorrect UX for a checkout screen.
+
+==================================================
+EXPECTED BEHAVIOR
+==================================================
+
+The Delivery Address on the Checkout screen must be READ-ONLY by default.
+
+The user must NOT be able to directly edit the address by:
+- tapping the address text
+- tapping inside the address card
+- tapping anywhere on the delivery address display area
+
+Add a clear "Edit" button in the top-right corner of the selected address card.
+
+Expected UI:
+
+Delivery Address
+
+┌──────────────────────────────────────┐
+│ [Building Icon]                 Edit │
+│                                      │
+│ Kanti kothiya, bihar                 │
+└──────────────────────────────────────┘
+
+Use the existing app green color for the "Edit" button.
+
+The Edit button should have a clear touch target.
+
+==================================================
+EDIT ADDRESS FLOW
+==================================================
+
+Only when the user taps the "Edit" button:
+
+1. Open the existing Edit Address screen or address editing modal.
+2. Load the currently selected delivery address.
+3. Allow the user to edit the address fields.
+4. Keep all TextInputs stable while typing.
+5. Do not dismiss the keyboard after every character.
+6. Save changes to the real Supabase database only when the user presses Save.
+7. After successful save, return to Checkout.
+8. Refresh the Delivery Address card.
+9. Immediately display the updated address.
+
+Do NOT enable inline editing directly inside the Checkout Delivery Address card.
+
+==================================================
+IMPLEMENTATION REQUIREMENT
+==================================================
+
+Inspect the current Delivery Address component.
+
+If the address is currently rendered using TextInput like:
+
+<TextInput
+  value={address}
+  onChangeText={setAddress}
+/>
+
+REMOVE the editable TextInput from the default Checkout view.
+
+Use a normal Text component:
+
+<Text style={styles.addressText}>
+  {selectedAddress.full_address}
+</Text>
+
+or use the correct existing address field from the current database schema.
+
+Add a separate Edit button:
+
+<TouchableOpacity
+  onPress={handleEditAddress}
+  hitSlop={{
+    top: 10,
+    bottom: 10,
+    left: 10,
+    right: 10,
+  }}
+>
+  <Text style={styles.editAddressText}>Edit</Text>
+</TouchableOpacity>
+
+Do not trigger editing from the parent address card.
+
+Remove any code like:
+
+onPress={() => setIsEditing(true)}
+
+from:
+- address card container
+- address text
+- delivery address section
+
+Only the dedicated Edit button should trigger address editing.
+
+==================================================
+ADDRESS CARD TOUCH BEHAVIOR
+==================================================
+
+Address text:
+READ ONLY
+
+Address card:
+READ ONLY
+
+Building/location icon:
+READ ONLY
+
+Edit button:
+EDIT ADDRESS
+
+Do not attach the edit handler to the entire parent card.
+
+Make sure event propagation does not accidentally trigger edit mode.
+
+==================================================
+SUPABASE DATA
+==================================================
+
+Use the real authenticated user's selected delivery address.
+
+Do not use:
+- hardcoded address
+- demo address
+- mock address
+- temporary fake data
+
+If the existing app has an addresses table, reuse it.
+
+Do not create a duplicate address table.
+
+When saving an edited address:
+- update the correct address record
+- verify user_id belongs to the authenticated user
+- handle Supabase update errors
+- do not silently fail
+
+Do not update Supabase on every keystroke.
+
+Keep edits in local form state and update the database only when Save is pressed.
+
+==================================================
+OPTIONAL UX IMPROVEMENT
+==================================================
+
+If the user has multiple saved addresses, add a separate "Change" option next to Edit.
+
+Example:
+
+Delivery Address
+
+┌──────────────────────────────────────┐
+│ [Building Icon]        Change   Edit │
+│                                      │
+│ Kanti kothiya, bihar                 │
+└──────────────────────────────────────┘
+
+Behavior:
+
+Change:
+Open My Addresses / Select Address screen and allow the user to select another saved delivery address.
+
+Edit:
+Edit only the currently selected address.
+
+Do not combine Change and Edit into the same action.
+
+If multiple-address selection is not implemented yet, only show the Edit button for now.
+
+==================================================
+DESIGN
+==================================================
+
+Keep the existing Checkout screen design.
+
+Do not redesign:
+- Checkout header
+- Order Summary
+- Total Amount
+- Place Order button
+- colors
+- typography
+- overall layout
+
+Only improve the Delivery Address card interaction.
+
+Style the Edit button:
+- green text or subtle light-green button
+- medium/semi-bold text
+- clearly visible
+- properly aligned at top-right
+- consistent with the existing pharmacy app theme
+
+==================================================
+FINAL TEST
+==================================================
+
+1. Open Checkout.
+2. Tap the displayed address text.
+3. Verify NOTHING enters edit mode.
+4. Tap the empty area of the address card.
+5. Verify NOTHING enters edit mode.
+6. Tap the building/location icon.
+7. Verify NOTHING enters edit mode.
+8. Tap Edit.
+9. Verify the Edit Address screen/modal opens.
+10. Type multiple words continuously.
+11. Verify the keyboard stays open while typing.
+12. Press Save.
+13. Verify the address is updated in Supabase.
+14. Return to Checkout.
+15. Verify the updated address appears immediately.
+16. Verify Place Order uses the selected updated delivery address.
+
+Do not use inline address editing on Checkout.
+Only allow address editing after the dedicated Edit button is pressed.

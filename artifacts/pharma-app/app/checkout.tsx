@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -29,17 +30,165 @@ const PAYMENT_OPTS: { id: PaymentMethod; icon: string; iconLib?: 'mci'; desc: st
   { id: 'Cash', icon: 'cash-outline', desc: 'Cash on delivery' },
 ];
 
+// ── Standalone EditAddressModal — hoisted outside to prevent TextInput remounting ──
+type EditAddressModalProps = {
+  visible: boolean;
+  initialAddress: string;
+  onSave: (address: string) => void;
+  onCancel: () => void;
+  colors: any;
+  insets: { bottom: number; top: number };
+};
+
+function EditAddressModal({ visible, initialAddress, onSave, onCancel, colors, insets }: EditAddressModalProps) {
+  const [draft, setDraft] = useState(initialAddress);
+
+  const handleChange = useCallback((text: string) => {
+    setDraft(text);
+  }, []);
+
+  function handleSave() {
+    if (!draft.trim()) {
+      Alert.alert('Address Required', 'Please enter a delivery address.');
+      return;
+    }
+    onSave(draft.trim());
+  }
+
+  // Re-sync draft when modal opens with a new address
+  const handleShow = useCallback(() => {
+    setDraft(initialAddress);
+  }, [initialAddress]);
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onShow={handleShow}
+      onRequestClose={onCancel}
+    >
+      <KeyboardAvoidingView
+        style={modalStyles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <Pressable style={modalStyles.backdrop} onPress={onCancel} />
+
+        <View style={[modalStyles.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
+          {/* Handle */}
+          <View style={[modalStyles.handle, { backgroundColor: colors.border }]} />
+
+          <Text style={[modalStyles.sheetTitle, { color: colors.foreground }]}>Edit Delivery Address</Text>
+          <Text style={[modalStyles.sheetSub, { color: colors.mutedForeground }]}>
+            Changes apply to this order only.
+          </Text>
+
+          <View style={[modalStyles.inputWrap, { borderColor: colors.primary, backgroundColor: colors.background }]}>
+            <Ionicons name="location-outline" size={18} color={colors.primary} style={{ marginTop: 2 }} />
+            <TextInput
+              style={[modalStyles.input, { color: colors.foreground }]}
+              value={draft}
+              onChangeText={handleChange}
+              multiline
+              numberOfLines={4}
+              placeholder="Enter delivery address..."
+              placeholderTextColor={colors.mutedForeground}
+              autoFocus
+              textAlignVertical="top"
+            />
+          </View>
+
+          <View style={modalStyles.btnRow}>
+            <Pressable
+              style={[modalStyles.cancelBtn, { borderColor: colors.border }]}
+              onPress={onCancel}
+            >
+              <Text style={[modalStyles.cancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              style={[modalStyles.saveBtn, { backgroundColor: colors.primary }]}
+              onPress={handleSave}
+            >
+              <Ionicons name="checkmark" size={18} color="#FFF" />
+              <Text style={modalStyles.saveText}>Save Address</Text>
+            </Pressable>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+const modalStyles = StyleSheet.create({
+  overlay: { flex: 1, justifyContent: 'flex-end' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingTop: 12,
+    gap: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 20,
+  },
+  handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, marginBottom: 8 },
+  sheetTitle: { fontSize: 18, fontWeight: '700', fontFamily: 'Inter_700Bold' },
+  sheetSub: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: -8 },
+  inputWrap: {
+    flexDirection: 'row',
+    gap: 10,
+    borderWidth: 1.5,
+    borderRadius: 14,
+    padding: 14,
+    minHeight: 110,
+    alignItems: 'flex-start',
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 22,
+  },
+  btnRow: { flexDirection: 'row', gap: 12, marginTop: 4 },
+  cancelBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  cancelText: { fontSize: 15, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
+  saveBtn: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  saveText: { color: '#FFF', fontSize: 15, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
+});
+
+// ─── Main Checkout Screen ──────────────────────────────────────────────────────
 export default function CheckoutScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { profile } = useAuth();
   const { items, subtotal, clearCart } = useCart();
   const { placeOrder } = useOrders();
+
   const [payment, setPayment] = useState<PaymentMethod>('Credit Account');
 
   const addrParts = [profile.address, profile.city, profile.state, profile.pincode].filter(Boolean);
-  const [address, setAddress] = useState(addrParts.length > 0 ? addrParts.join(', ') : '');
+  const [address, setAddress] = useState(addrParts.join(', '));
+
   const [placing, setPlacing] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(false);
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
@@ -48,6 +197,12 @@ export default function CheckoutScreen() {
   const delivery = subtotal >= 2000 ? 0 : 60;
   const total = subtotal + gst + delivery;
 
+  function handleSaveAddress(newAddress: string) {
+    setAddress(newAddress);
+    setEditingAddress(false);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }
+
   async function handlePlaceOrder() {
     if (items.length === 0) {
       Alert.alert('Empty Cart', 'Add items to your cart before placing an order.');
@@ -55,7 +210,7 @@ export default function CheckoutScreen() {
     }
 
     if (!address.trim()) {
-      Alert.alert('Address Required', 'Please enter a delivery address to continue.');
+      Alert.alert('Address Required', 'Please enter or edit your delivery address before continuing.');
       return;
     }
 
@@ -79,151 +234,160 @@ export default function CheckoutScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 8, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <Ionicons name="arrow-back" size={24} color={colors.foreground} />
-        </Pressable>
-        <Text style={[styles.title, { color: colors.foreground }]}>Checkout</Text>
-        <Text style={[styles.step, { color: colors.mutedForeground }]}>{items.length} items</Text>
-      </View>
+    <>
+      <EditAddressModal
+        visible={editingAddress}
+        initialAddress={address}
+        onSave={handleSaveAddress}
+        onCancel={() => setEditingAddress(false)}
+        colors={colors}
+        insets={{ bottom: bottomPad, top: topPad }}
+      />
 
-      <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: bottomPad + 120, gap: 20 }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: colors.background }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Delivery Address */}
-        <Section title="Delivery Address" icon="location-outline" colors={colors}>
-          <View style={[styles.addrWrap, { borderColor: colors.border, backgroundColor: colors.card }]}>
-            {profile.businessName ? (
-              <View style={styles.addrHeader}>
-                <View style={[styles.addrIcon, { backgroundColor: colors.successLight ?? '#E6F4ED' }]}>
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: topPad + 8, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+          <Pressable onPress={() => router.back()} hitSlop={8}>
+            <Ionicons name="arrow-back" size={24} color={colors.foreground} />
+          </Pressable>
+          <Text style={[styles.title, { color: colors.foreground }]}>Checkout</Text>
+          <Text style={[styles.step, { color: colors.mutedForeground }]}>{items.length} items</Text>
+        </View>
+
+        <ScrollView
+          contentContainerStyle={{ padding: 20, paddingBottom: bottomPad + 120, gap: 20 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* ── Delivery Address ── */}
+          <Section title="Delivery Address" icon="location-outline" colors={colors}>
+            <View style={[styles.addrCard, { borderColor: colors.border }]}>
+              {/* Card top row: icon + business name + Edit button */}
+              <View style={styles.addrTopRow}>
+                <View style={[styles.addrIconWrap, { backgroundColor: colors.successLight ?? '#E6F4ED' }]}>
                   <Ionicons name="business-outline" size={18} color={colors.primary} />
                 </View>
-                <Text style={[styles.addrBiz, { color: colors.foreground }]}>{profile.businessName}</Text>
+                <Text style={[styles.addrBiz, { color: colors.foreground }]} numberOfLines={1}>
+                  {profile.businessName || 'Delivery Address'}
+                </Text>
+                <Pressable
+                  style={[styles.editAddrBtn, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '40' }]}
+                  onPress={() => { setEditingAddress(true); Haptics.selectionAsync(); }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="pencil-outline" size={13} color={colors.primary} />
+                  <Text style={[styles.editAddrText, { color: colors.primary }]}>Edit</Text>
+                </Pressable>
               </View>
-            ) : null}
-            <TextInput
-              style={[
-                styles.addrInput,
-                {
-                  color: colors.foreground,
-                  borderColor: address.trim() ? colors.border : colors.destructive,
-                  borderWidth: 1,
-                  borderRadius: 10,
-                  padding: 10,
-                },
-              ]}
-              value={address}
-              onChangeText={setAddress}
-              multiline
-              numberOfLines={3}
-              placeholder="Enter your delivery address..."
-              placeholderTextColor={colors.mutedForeground}
-            />
-            {!address.trim() && (
-              <Text style={[styles.addrHint, { color: colors.destructive }]}>
-                Delivery address is required to place an order
+
+              {/* Read-only address display */}
+              {address.trim() ? (
+                <Text style={[styles.addrText, { color: colors.foreground }]}>
+                  {address}
+                </Text>
+              ) : (
+                <Pressable
+                  style={[styles.addrEmpty, { borderColor: colors.primary + '40', backgroundColor: colors.primary + '08' }]}
+                  onPress={() => { setEditingAddress(true); Haptics.selectionAsync(); }}
+                >
+                  <Ionicons name="add-circle-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.addrEmptyText, { color: colors.primary }]}>Tap to add a delivery address</Text>
+                </Pressable>
+              )}
+            </View>
+          </Section>
+
+          {/* ── Order Summary ── */}
+          <Section title="Order Summary" icon="receipt-outline" colors={colors}>
+            {items.slice(0, 3).map((item) => (
+              <View key={item.medicine.id} style={styles.orderItemRow}>
+                <MaterialCommunityIcons name={item.medicine.iconName as any} size={18} color={item.medicine.iconColor} />
+                <Text style={[styles.orderItemName, { color: colors.foreground }]} numberOfLines={1}>
+                  {item.medicine.name}
+                </Text>
+                <Text style={[styles.orderItemQty, { color: colors.mutedForeground }]}>×{item.qty}</Text>
+                <Text style={[styles.orderItemPrice, { color: colors.foreground }]}>
+                  ₹{(item.medicine.wholesalePrice * item.qty).toLocaleString()}
+                </Text>
+              </View>
+            ))}
+            {items.length > 3 && (
+              <Text style={[styles.moreItems, { color: colors.mutedForeground }]}>
+                +{items.length - 3} more items
               </Text>
             )}
-          </View>
-        </Section>
-
-        {/* Order Summary */}
-        <Section title="Order Summary" icon="receipt-outline" colors={colors}>
-          {items.slice(0, 3).map((item) => (
-            <View key={item.medicine.id} style={styles.orderItemRow}>
-              <MaterialCommunityIcons name={item.medicine.iconName as any} size={18} color={item.medicine.iconColor} />
-              <Text style={[styles.orderItemName, { color: colors.foreground }]} numberOfLines={1}>
-                {item.medicine.name}
-              </Text>
-              <Text style={[styles.orderItemQty, { color: colors.mutedForeground }]}>×{item.qty}</Text>
-              <Text style={[styles.orderItemPrice, { color: colors.foreground }]}>
-                ₹{(item.medicine.wholesalePrice * item.qty).toLocaleString()}
-              </Text>
+            <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+            {[
+              { label: 'Subtotal', value: `₹${subtotal.toLocaleString()}` },
+              { label: 'GST (12%)', value: `₹${gst.toLocaleString()}` },
+              { label: 'Delivery', value: delivery === 0 ? 'FREE' : `₹${delivery}`, highlight: delivery === 0 },
+            ].map(({ label, value, highlight }) => (
+              <View key={label} style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>{label}</Text>
+                <Text style={[styles.summaryValue, { color: highlight ? colors.primary : colors.foreground }]}>{value}</Text>
+              </View>
+            ))}
+            <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.summaryRow}>
+              <Text style={[styles.totalLabel, { color: colors.foreground }]}>Total Amount</Text>
+              <Text style={[styles.totalValue, { color: colors.primary }]}>₹{total.toLocaleString()}</Text>
             </View>
-          ))}
-          {items.length > 3 && (
-            <Text style={[styles.moreItems, { color: colors.mutedForeground }]}>
-              +{items.length - 3} more items
-            </Text>
-          )}
-          <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
-          {[
-            { label: 'Subtotal', value: `₹${subtotal.toLocaleString()}` },
-            { label: 'GST (12%)', value: `₹${gst.toLocaleString()}` },
-            { label: 'Delivery', value: delivery === 0 ? 'FREE' : `₹${delivery}`, highlight: delivery === 0 },
-          ].map(({ label, value, highlight }) => (
-            <View key={label} style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>{label}</Text>
-              <Text style={[styles.summaryValue, { color: highlight ? colors.primary : colors.foreground }]}>{value}</Text>
-            </View>
-          ))}
-          <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
-          <View style={styles.summaryRow}>
-            <Text style={[styles.totalLabel, { color: colors.foreground }]}>Total Amount</Text>
-            <Text style={[styles.totalValue, { color: colors.primary }]}>₹{total.toLocaleString()}</Text>
+          </Section>
+
+          {/* ── Payment Method ── */}
+          <Section title="Payment Method" icon="wallet-outline" colors={colors}>
+            {PAYMENT_OPTS.map((opt) => (
+              <Pressable
+                key={opt.id}
+                style={[
+                  styles.payRow,
+                  {
+                    backgroundColor: payment === opt.id ? colors.successLight ?? '#E6F4ED' : colors.card,
+                    borderColor: payment === opt.id ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => { setPayment(opt.id); Haptics.selectionAsync(); }}
+              >
+                <View style={[styles.payIcon, { backgroundColor: payment === opt.id ? colors.primary : colors.muted }]}>
+                  {opt.iconLib === 'mci'
+                    ? <MaterialCommunityIcons name={opt.icon as any} size={20} color={payment === opt.id ? '#FFF' : colors.foreground} />
+                    : <Ionicons name={opt.icon as any} size={20} color={payment === opt.id ? '#FFF' : colors.foreground} />
+                  }
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.payName, { color: colors.foreground }]}>{opt.id}</Text>
+                  <Text style={[styles.payDesc, { color: colors.mutedForeground }]}>{opt.desc}</Text>
+                </View>
+                <View style={[styles.radio, { borderColor: payment === opt.id ? colors.primary : colors.border }]}>
+                  {payment === opt.id && (
+                    <View style={[styles.radioDot, { backgroundColor: colors.primary }]} />
+                  )}
+                </View>
+              </Pressable>
+            ))}
+          </Section>
+        </ScrollView>
+
+        {/* ── Place Order bar ── */}
+        <View style={[styles.placeBar, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: bottomPad + 16 }]}>
+          <View>
+            <Text style={[styles.placeTotal, { color: colors.primary }]}>₹{total.toLocaleString()}</Text>
+            <Text style={[styles.placeItems, { color: colors.mutedForeground }]}>{items.length} items · {payment}</Text>
           </View>
-        </Section>
-
-        {/* Payment Method */}
-        <Section title="Payment Method" icon="wallet-outline" colors={colors}>
-          {PAYMENT_OPTS.map((opt) => (
-            <Pressable
-              key={opt.id}
-              style={[
-                styles.payRow,
-                {
-                  backgroundColor: payment === opt.id ? colors.successLight ?? '#E6F4ED' : colors.card,
-                  borderColor: payment === opt.id ? colors.primary : colors.border,
-                },
-              ]}
-              onPress={() => { setPayment(opt.id); Haptics.selectionAsync(); }}
-            >
-              <View style={[styles.payIcon, { backgroundColor: payment === opt.id ? colors.primary : colors.muted }]}>
-                {opt.iconLib === 'mci'
-                  ? <MaterialCommunityIcons name={opt.icon as any} size={20} color={payment === opt.id ? '#FFF' : colors.foreground} />
-                  : <Ionicons name={opt.icon as any} size={20} color={payment === opt.id ? '#FFF' : colors.foreground} />
-                }
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.payName, { color: colors.foreground }]}>{opt.id}</Text>
-                <Text style={[styles.payDesc, { color: colors.mutedForeground }]}>{opt.desc}</Text>
-              </View>
-              <View style={[styles.radio, { borderColor: payment === opt.id ? colors.primary : colors.border }]}>
-                {payment === opt.id && (
-                  <View style={[styles.radioDot, { backgroundColor: colors.primary }]} />
-                )}
-              </View>
-            </Pressable>
-          ))}
-        </Section>
-      </ScrollView>
-
-      {/* Place Order bar */}
-      <View style={[styles.placeBar, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: bottomPad + 16 }]}>
-        <View>
-          <Text style={[styles.placeTotal, { color: colors.primary }]}>₹{total.toLocaleString()}</Text>
-          <Text style={[styles.placeItems, { color: colors.mutedForeground }]}>{items.length} items · {payment}</Text>
+          <Pressable
+            style={[styles.placeBtn, { backgroundColor: placing ? colors.muted : colors.primary }]}
+            onPress={handlePlaceOrder}
+            disabled={placing}
+          >
+            <Ionicons name={placing ? 'time-outline' : 'checkmark-circle-outline'} size={20} color="#FFF" />
+            <Text style={styles.placeBtnText}>{placing ? 'Placing…' : 'Place Order'}</Text>
+          </Pressable>
         </View>
-        <Pressable
-          style={[
-            styles.placeBtn,
-            { backgroundColor: placing ? colors.muted : colors.primary },
-          ]}
-          onPress={handlePlaceOrder}
-          disabled={placing}
-        >
-          <Ionicons name={placing ? 'time-outline' : 'checkmark-circle-outline'} size={20} color="#FFF" />
-          <Text style={styles.placeBtnText}>{placing ? 'Placing…' : 'Place Order'}</Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </>
   );
 }
 
@@ -245,15 +409,45 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingBottom: 14, borderBottomWidth: 1 },
   title: { flex: 1, fontSize: 20, fontWeight: '700', fontFamily: 'Inter_700Bold' },
   step: { fontSize: 13, fontFamily: 'Inter_400Regular' },
+
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionTitle: { fontSize: 16, fontWeight: '700', fontFamily: 'Inter_700Bold' },
   sectionCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 12 },
-  addrWrap: { gap: 10 },
-  addrHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  addrIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  addrBiz: { fontSize: 15, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
-  addrInput: { fontSize: 14, fontFamily: 'Inter_400Regular', lineHeight: 22 },
-  addrHint: { fontSize: 12, fontFamily: 'Inter_400Regular' },
+
+  // ── Address card
+  addrCard: { gap: 10 },
+  addrTopRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  addrIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  addrBiz: { flex: 1, fontSize: 14, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
+  editAddrBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  editAddrText: { fontSize: 13, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
+  addrText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 22,
+    paddingTop: 2,
+  },
+  addrEmpty: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+  },
+  addrEmptyText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
+
+  // ── Order summary
   orderItemRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   orderItemName: { flex: 1, fontSize: 13, fontFamily: 'Inter_500Medium' },
   orderItemQty: { fontSize: 13, fontFamily: 'Inter_400Regular' },
@@ -265,12 +459,16 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: 14, fontWeight: '500', fontFamily: 'Inter_500Medium' },
   totalLabel: { fontSize: 16, fontWeight: '700', fontFamily: 'Inter_700Bold' },
   totalValue: { fontSize: 18, fontWeight: '700', fontFamily: 'Inter_700Bold' },
+
+  // ── Payment
   payRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 14, padding: 14, gap: 12 },
   payIcon: { width: 40, height: 40, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   payName: { fontSize: 14, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
   payDesc: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 10, height: 10, borderRadius: 5 },
+
+  // ── Place Order bar
   placeBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 16, borderTopWidth: 1 },
   placeTotal: { fontSize: 20, fontWeight: '700', fontFamily: 'Inter_700Bold' },
   placeItems: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
