@@ -24,7 +24,7 @@ export default function ProductDetailScreen() {
   const medicine = getMedicineById(id ?? '');
   const { addItem, getItemQty, updateQty } = useCart();
   const { toggle, isWishlisted } = useWishlist();
-  const [activeTab, setActiveTab] = useState<'info' | 'details' | 'bulk'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'details'>('info');
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
@@ -45,13 +45,6 @@ export default function ProductDetailScreen() {
   const wishlisted = isWishlisted(medicine.id);
   const isOutOfStock = medicine.stock === 0;
   const gstAmount = Math.round(medicine.wholesalePrice * medicine.gstRate / 100);
-
-  const BULK_TIERS = [
-    { min: 1, max: 49, price: medicine.wholesalePrice, label: 'Standard' },
-    { min: 50, max: 199, price: Math.round(medicine.wholesalePrice * 0.95), label: '5% extra off' },
-    { min: 200, max: 999, price: Math.round(medicine.wholesalePrice * 0.90), label: '10% extra off' },
-    { min: 1000, max: null, price: Math.round(medicine.wholesalePrice * 0.85), label: '15% extra off' },
-  ];
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -139,14 +132,14 @@ export default function ProductDetailScreen() {
 
           {/* Tab switcher */}
           <View style={[styles.tabBar, { borderColor: colors.border }]}>
-            {(['info', 'details', 'bulk'] as const).map((t) => (
+            {(['info', 'details'] as const).map((t) => (
               <Pressable
                 key={t}
                 style={[styles.tabBtn, activeTab === t && { backgroundColor: colors.primary }]}
                 onPress={() => { setActiveTab(t); Haptics.selectionAsync(); }}
               >
                 <Text style={[styles.tabBtnText, activeTab === t ? { color: '#FFF' } : { color: colors.mutedForeground }]}>
-                  {t === 'info' ? 'Overview' : t === 'details' ? 'Clinical' : 'Bulk Pricing'}
+                  {t === 'info' ? 'Overview' : 'Clinical'}
                 </Text>
               </Pressable>
             ))}
@@ -175,25 +168,6 @@ export default function ProductDetailScreen() {
             </View>
           )}
 
-          {activeTab === 'bulk' && (
-            <View style={styles.tabContent}>
-              <Text style={[styles.bulkTitle, { color: colors.foreground }]}>Volume Discount Tiers</Text>
-              {BULK_TIERS.map((tier, i) => (
-                <View key={i} style={[styles.tierRow, { backgroundColor: i === 0 ? colors.card : colors.muted, borderColor: colors.border }]}>
-                  <View>
-                    <Text style={[styles.tierQty, { color: colors.foreground }]}>
-                      {tier.min}+ units{tier.max ? ` (up to ${tier.max})` : ''}
-                    </Text>
-                    <Text style={[styles.tierLabel, { color: colors.primary }]}>{tier.label}</Text>
-                  </View>
-                  <Text style={[styles.tierPrice, { color: colors.primary }]}>₹{tier.price}/unit</Text>
-                </View>
-              ))}
-              <Text style={[styles.bulkNote, { color: colors.mutedForeground }]}>
-                * Bulk pricing applied automatically in cart. Contact your sales rep for custom quotes above 5000 units.
-              </Text>
-            </View>
-          )}
         </View>
       </ScrollView>
 
@@ -314,12 +288,6 @@ const styles = StyleSheet.create({
   listItem: { flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular', lineHeight: 22 },
   warningBox: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, alignItems: 'flex-start' },
   warningText: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 20 },
-  bulkTitle: { fontSize: 15, fontWeight: '700', fontFamily: 'Inter_700Bold' },
-  tierRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, borderRadius: 12, borderWidth: 1 },
-  tierQty: { fontSize: 14, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
-  tierLabel: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
-  tierPrice: { fontSize: 18, fontWeight: '700', fontFamily: 'Inter_700Bold' },
-  bulkNote: { fontSize: 12, fontFamily: 'Inter_400Regular', lineHeight: 18 },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 14 },
   qtyBarRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   qtyBarLabel: { fontSize: 12, fontFamily: 'Inter_400Regular' },

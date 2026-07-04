@@ -65,7 +65,7 @@ export default function HomeScreen() {
       <View style={[styles.banner, { backgroundColor: '#1a6e3f' }]}>
         <View style={{ flex: 1 }}>
           <Text style={styles.bannerTitle}>Flash Sale — Up to 35% off</Text>
-          <Text style={styles.bannerSub}>On bulk orders above ₹5,000</Text>
+          <Text style={styles.bannerSub}>On orders above ₹2,000 · Free delivery included</Text>
         </View>
         <Pressable
           style={styles.bannerBtn}
