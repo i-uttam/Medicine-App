@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -35,9 +36,9 @@ export default function CheckoutScreen() {
   const { items, subtotal, clearCart } = useCart();
   const { placeOrder } = useOrders();
   const [payment, setPayment] = useState<PaymentMethod>('Credit Account');
-  const [address, setAddress] = useState(
-    `${profile.address}, ${profile.city}, ${profile.state} - ${profile.pincode}`,
-  );
+
+  const addrParts = [profile.address, profile.city, profile.state, profile.pincode].filter(Boolean);
+  const [address, setAddress] = useState(addrParts.length > 0 ? addrParts.join(', ') : '');
   const [placing, setPlacing] = useState(false);
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
@@ -48,15 +49,31 @@ export default function CheckoutScreen() {
   const total = subtotal + gst + delivery;
 
   async function handlePlaceOrder() {
-    if (!address.trim()) return;
+    if (items.length === 0) {
+      Alert.alert('Empty Cart', 'Add items to your cart before placing an order.');
+      return;
+    }
+
+    if (!address.trim()) {
+      Alert.alert('Address Required', 'Please enter a delivery address to continue.');
+      return;
+    }
+
     setPlacing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
     try {
-      const orderId = await placeOrder(items, address, payment);
+      const orderId = await placeOrder(items, address.trim(), payment);
       clearCart();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace(`/order/${orderId}`);
-    } catch {
+    } catch (err: any) {
+      console.error('Place order failed:', err);
+      Alert.alert(
+        'Order Failed',
+        err?.message ?? 'Unable to place your order. Please try again.',
+        [{ text: 'OK' }],
+      );
       setPlacing(false);
     }
   }
@@ -68,7 +85,7 @@ export default function CheckoutScreen() {
     >
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 8, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="arrow-back" size={24} color={colors.foreground} />
         </Pressable>
         <Text style={[styles.title, { color: colors.foreground }]}>Checkout</Text>
@@ -83,20 +100,37 @@ export default function CheckoutScreen() {
         {/* Delivery Address */}
         <Section title="Delivery Address" icon="location-outline" colors={colors}>
           <View style={[styles.addrWrap, { borderColor: colors.border, backgroundColor: colors.card }]}>
-            <View style={styles.addrHeader}>
-              <View style={[styles.addrIcon, { backgroundColor: colors.successLight ?? '#E6F4ED' }]}>
-                <Ionicons name="business-outline" size={18} color={colors.primary} />
+            {profile.businessName ? (
+              <View style={styles.addrHeader}>
+                <View style={[styles.addrIcon, { backgroundColor: colors.successLight ?? '#E6F4ED' }]}>
+                  <Ionicons name="business-outline" size={18} color={colors.primary} />
+                </View>
+                <Text style={[styles.addrBiz, { color: colors.foreground }]}>{profile.businessName}</Text>
               </View>
-              <Text style={[styles.addrBiz, { color: colors.foreground }]}>{profile.businessName}</Text>
-            </View>
+            ) : null}
             <TextInput
-              style={[styles.addrInput, { color: colors.foreground }]}
+              style={[
+                styles.addrInput,
+                {
+                  color: colors.foreground,
+                  borderColor: address.trim() ? colors.border : colors.destructive,
+                  borderWidth: 1,
+                  borderRadius: 10,
+                  padding: 10,
+                },
+              ]}
               value={address}
               onChangeText={setAddress}
               multiline
               numberOfLines={3}
+              placeholder="Enter your delivery address..."
               placeholderTextColor={colors.mutedForeground}
             />
+            {!address.trim() && (
+              <Text style={[styles.addrHint, { color: colors.destructive }]}>
+                Delivery address is required to place an order
+              </Text>
+            )}
           </View>
         </Section>
 
@@ -178,11 +212,14 @@ export default function CheckoutScreen() {
           <Text style={[styles.placeItems, { color: colors.mutedForeground }]}>{items.length} items · {payment}</Text>
         </View>
         <Pressable
-          style={[styles.placeBtn, { backgroundColor: placing ? colors.muted : colors.primary }]}
+          style={[
+            styles.placeBtn,
+            { backgroundColor: placing ? colors.muted : colors.primary },
+          ]}
           onPress={handlePlaceOrder}
           disabled={placing}
         >
-          <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
+          <Ionicons name={placing ? 'time-outline' : 'checkmark-circle-outline'} size={20} color="#FFF" />
           <Text style={styles.placeBtnText}>{placing ? 'Placing…' : 'Place Order'}</Text>
         </Pressable>
       </View>
@@ -211,11 +248,12 @@ const styles = StyleSheet.create({
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionTitle: { fontSize: 16, fontWeight: '700', fontFamily: 'Inter_700Bold' },
   sectionCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 12 },
-  addrWrap: { borderWidth: 1, borderRadius: 14, padding: 14, gap: 10 },
+  addrWrap: { gap: 10 },
   addrHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   addrIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   addrBiz: { fontSize: 15, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
   addrInput: { fontSize: 14, fontFamily: 'Inter_400Regular', lineHeight: 22 },
+  addrHint: { fontSize: 12, fontFamily: 'Inter_400Regular' },
   orderItemRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   orderItemName: { flex: 1, fontSize: 13, fontFamily: 'Inter_500Medium' },
   orderItemQty: { fontSize: 13, fontFamily: 'Inter_400Regular' },

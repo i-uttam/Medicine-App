@@ -7,13 +7,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '@/context/CartContext';
 import { useColors } from '@/hooks/useColors';
 
+const TAB_BAR_HEIGHT = 60;
+
 export default function CartScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { items, removeItem, updateQty, subtotal, totalItems } = useCart();
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
-  const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+  // Tab bar sits from bottom: 0 to bottom: tabBarTotal
+  const tabBarTotal = Platform.OS === 'web' ? TAB_BAR_HEIGHT : TAB_BAR_HEIGHT + insets.bottom;
+  // Checkout bar is ~80px tall; scroll content must clear both
+  const checkoutBarHeight = 80;
 
   const gst = Math.round(subtotal * 0.12);
   const delivery = subtotal >= 2000 ? 0 : 60;
@@ -45,7 +50,11 @@ export default function CartScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 160, gap: 12 }}
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: tabBarTotal + checkoutBarHeight + 24,
+          gap: 12,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {items.map((item) => (
@@ -116,8 +125,17 @@ export default function CartScreen() {
         </View>
       </ScrollView>
 
-      {/* Checkout */}
-      <View style={[styles.checkoutBar, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: bottomPad + 16 }]}>
+      {/* Checkout bar — sits directly above the tab bar */}
+      <View
+        style={[
+          styles.checkoutBar,
+          {
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            bottom: tabBarTotal,
+          },
+        ]}
+      >
         <View>
           <Text style={[styles.checkoutTotal, { color: colors.primary }]}>₹{total.toLocaleString()}</Text>
           <Text style={[styles.checkoutSub, { color: colors.mutedForeground }]}>Incl. GST & delivery</Text>
@@ -165,7 +183,17 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 16, fontWeight: '700', fontFamily: 'Inter_700Bold' },
   totalVal: { fontSize: 18, fontWeight: '700', fontFamily: 'Inter_700Bold' },
   freeNote: { fontSize: 12, fontFamily: 'Inter_500Medium', marginTop: 4 },
-  checkoutBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 16, borderTopWidth: 1 },
+  checkoutBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+  },
   checkoutTotal: { fontSize: 18, fontWeight: '700', fontFamily: 'Inter_700Bold' },
   checkoutSub: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 },
   checkoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 14, borderRadius: 14 },

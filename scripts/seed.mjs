@@ -4,8 +4,8 @@
  */
 import pg from '/home/runner/workspace/node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/index.js';
 
-const url = process.env.SUPABASE_DB_URL;
-if (!url) throw new Error('SUPABASE_DB_URL is not set');
+const url = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+if (!url) throw new Error('Neither SUPABASE_DB_URL nor DATABASE_URL is set');
 
 const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
 
