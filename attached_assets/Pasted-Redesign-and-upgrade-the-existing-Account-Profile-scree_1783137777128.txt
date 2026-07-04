@@ -1,0 +1,527 @@
+Redesign and upgrade the existing Account / Profile screen of my wholesale pharmacy mobile app.
+
+REFERENCE:
+Use the attached/reference Netmeds-style Account screen only as UI/UX inspiration.
+
+IMPORTANT:
+Do NOT make an exact copy.
+Do NOT copy Netmeds branding, logo, membership name, colors, text, or proprietary assets.
+
+Create an original Account/Profile experience that matches my existing pharmacy app's green design system and current bottom navigation.
+
+==================================================
+DESIGN GOAL
+==================================================
+
+Create a clean, modern, premium pharmacy Account screen.
+
+The screen should feel:
+- professional
+- trustworthy
+- minimal
+- easy to scan
+- optimized for Android
+- suitable for a wholesale medicine ordering app
+
+Keep the existing app's green primary color and visual identity.
+
+Do not redesign the entire application.
+Only improve the Account/Profile section and connect it with existing app features.
+
+==================================================
+1. PROFILE HEADER
+==================================================
+
+Create a clean profile header at the top.
+
+Show:
+
+[Profile Avatar]  Business / User Name                [Edit]
+                  Phone Number
+                  Email Address
+                  Profile Completion: XX%
+                  [Progress Bar]
+
+Example:
+
+(U)   Uttam Kumar                         Edit
+      7992263435
+      anonymousboyuttam@gmail.com
+      Profile Completion: 83%
+      ━━━━━━━━━━━━━━━━
+
+Use the REAL authenticated user's profile data from Supabase.
+
+Do not use hardcoded data.
+
+Fetch profile information using the authenticated Supabase user ID.
+
+Profile fields should come from the existing profile/user table where available.
+
+Possible profile fields:
+
+- full_name
+- business_name
+- owner_name
+- phone
+- email
+- address
+- gst_number
+- drug_license_number
+
+Use the existing database schema.
+Do not create duplicate profile tables.
+
+For the avatar:
+- show the user's profile image if available
+- otherwise show a clean circular placeholder/avatar
+- optionally show the first letter of the user's name or business name
+
+The Edit button should open the existing Profile Edit flow.
+
+IMPORTANT:
+Preserve the previously fixed TextInput keyboard/focus behavior.
+Do not reintroduce the bug where the keyboard closes after typing one character.
+
+==================================================
+2. PROFILE COMPLETION SYSTEM
+==================================================
+
+Add a real dynamic Profile Completion percentage.
+
+Do NOT hardcode 83%.
+
+Calculate completion based on important wholesale pharmacy profile fields.
+
+Suggested required fields:
+
+- full_name / owner_name
+- business_name
+- phone
+- email
+- address
+- GST number
+- Drug License number
+
+Example logic:
+
+const profileFields = [
+  profile.owner_name,
+  profile.business_name,
+  profile.phone,
+  profile.email,
+  profile.address,
+  profile.gst_number,
+  profile.drug_license_number,
+];
+
+const completedFields = profileFields.filter(
+  value => value && value.trim() !== ''
+).length;
+
+const profileCompletion = Math.round(
+  (completedFields / profileFields.length) * 100
+);
+
+Display:
+
+Profile Completion: 83%
+
+Add a smooth green progress bar below it.
+
+If profile completion is below 100%, tapping the completion area should open Edit Profile.
+
+==================================================
+3. WHOLESALE PHARMACY INFO CARD
+==================================================
+
+Below the profile header, add a premium business verification/info card.
+
+Do NOT copy "Netmeds First Membership".
+
+Create an original card suitable for my wholesale pharmacy app.
+
+Example:
+
+Complete Your Business Profile
+Add GST & Drug License details to unlock full ordering features
+
+or, if verified:
+
+Business Verified
+Your pharmacy business details are verified
+
+Show a suitable pharmacy/business icon.
+
+Add a right arrow.
+
+The card should dynamically change based on profile/business verification status.
+
+If required profile information is incomplete:
+Show:
+"Complete Your Business Profile"
+
+If profile information is complete but verification is pending:
+Show:
+"Verification Pending"
+
+If verified:
+Show:
+"Business Verified"
+
+Use existing database verification fields if available.
+
+Do not fake verification status.
+
+==================================================
+4. ACCOUNT MENU SECTIONS
+==================================================
+
+Create clean menu rows inspired by the reference screenshot.
+
+Each row should contain:
+
+[Icon]   Menu Title                         [Chevron]
+
+Use consistent:
+- icon size
+- row height
+- spacing
+- divider
+- typography
+- touch feedback
+
+Recommended Account menu:
+
+My Orders
+My Addresses
+Saved Products
+Notifications
+Business Details
+GST & License Details
+Help & Support
+
+Then add:
+
+Privacy Policy
+Terms & Conditions
+About Us
+
+Only show features that exist or can be connected to the current application architecture.
+
+Do not add fake screens with fake data.
+
+==================================================
+5. MY ORDERS
+==================================================
+
+"My Orders" must open the existing real Order History screen.
+
+Fetch real orders from Supabase.
+
+Use the authenticated user's ID.
+
+Do not show:
+- demo orders
+- hardcoded orders
+- mock order history
+
+The newly placed order from the Cart -> Place Order flow must appear here.
+
+==================================================
+6. MY ADDRESSES
+==================================================
+
+Create or connect the My Addresses screen.
+
+Allow users to:
+
+- view saved delivery addresses
+- add a new address
+- edit an address
+- delete an address
+- select a default delivery address
+
+Use real Supabase data.
+
+Associate addresses with:
+
+user_id = authenticated user's ID
+
+Do not store addresses only in local React state.
+
+If an existing address table/schema exists, reuse it.
+
+Do not create duplicate database structures without inspecting the current schema.
+
+==================================================
+7. SAVED PRODUCTS
+==================================================
+
+Connect Saved Products to the existing wishlist/saved product functionality if it exists.
+
+Show real products saved by the current user.
+
+If no saved product system currently exists, do not add fake products.
+
+Create a proper database-backed saved products architecture only if needed and compatible with the existing app.
+
+==================================================
+8. NOTIFICATIONS
+==================================================
+
+Create a Notifications menu item.
+
+If the existing app already has notification data, connect to it.
+
+Show:
+- order updates
+- order status changes
+- account/business verification updates
+
+Do not generate fake notification history.
+
+Use an empty state if no notifications exist.
+
+==================================================
+9. BUSINESS DETAILS
+==================================================
+
+Business Details should display real wholesale customer information:
+
+- Business Name
+- Owner Name
+- Phone
+- Email
+- Business Address
+
+Allow editing through the existing Edit Profile system.
+
+Do not create a second separate profile data source.
+
+==================================================
+10. GST & LICENSE DETAILS
+==================================================
+
+Create a dedicated GST & License Details screen.
+
+Show:
+
+GST Number
+Drug License Number
+Verification Status
+
+Use real profile/business data from Supabase.
+
+Possible status:
+
+Incomplete
+Pending Verification
+Verified
+Rejected
+
+Only use statuses supported by the current database.
+
+Do not fake "Verified".
+
+==================================================
+11. HELP & SUPPORT
+==================================================
+
+Create a simple professional Help & Support screen.
+
+Possible actions:
+
+- Contact Support
+- Report an Issue
+- Order Related Help
+- Account Related Help
+
+Do not use fake support phone numbers or fake email addresses.
+
+Use existing application/company support details if configured.
+
+==================================================
+12. LOGOUT BUTTON
+==================================================
+
+At the bottom of the Account screen, add a clean Logout button.
+
+Style:
+
+Outlined button
+Red logout icon/text
+Rounded corners
+
+On press:
+
+Show confirmation:
+
+"Are you sure you want to logout?"
+
+Buttons:
+
+Cancel
+Logout
+
+On confirmation:
+
+await supabase.auth.signOut();
+
+Then:
+- clear authenticated user state
+- clear user-specific local cache if applicable
+- reset navigation
+- navigate to Login/Auth screen
+
+Do not delete the user's Supabase data.
+
+==================================================
+13. UI STYLE
+==================================================
+
+Follow the current app design system.
+
+Primary color:
+Use the existing green theme already used in Home, Cart, and bottom navigation.
+
+Background:
+Very light gray/off-white.
+
+Cards:
+White background.
+
+Border radius:
+16-20px.
+
+Use subtle borders and very soft shadows.
+
+Typography:
+Clear visual hierarchy.
+
+Profile name/business name:
+Bold and prominent.
+
+Secondary information:
+Muted gray.
+
+Menu title:
+Medium/semi-bold.
+
+Icons:
+Use the icon library already installed in the project.
+
+Do not install another icon library unless absolutely necessary.
+
+Use pharmacy/business relevant icons.
+
+==================================================
+14. SCROLL AND SAFE AREA
+==================================================
+
+The Account screen must be fully scrollable.
+
+Use:
+
+SafeAreaView
+ScrollView
+
+Respect:
+- Android status bar
+- Android system navigation
+- app bottom tab navigation
+
+The final menu and Logout button must never hide behind the bottom navigation.
+
+Use proper bottom safe-area/tab-bar spacing.
+
+Do not use random hardcoded device-specific margins.
+
+If React Navigation bottom tabs are used, use the actual tab bar height when appropriate.
+
+==================================================
+15. PERFORMANCE AND STATE
+==================================================
+
+Do not refetch the complete profile on every render.
+
+Use proper useEffect dependencies.
+
+Prevent infinite render loops.
+
+Do not remount the entire Account screen unnecessarily.
+
+Use stable component keys.
+
+Profile editing must keep TextInput focus while typing.
+
+Do not update Supabase on every keystroke.
+
+Save profile changes only when the user presses Save.
+
+Refresh Account profile data after a successful profile update.
+
+==================================================
+FINAL ACCOUNT SCREEN STRUCTURE
+==================================================
+
+Account
+
+[ Avatar ]  Business/User Name                 Edit
+            Phone
+            Email
+            Profile Completion: XX%
+            [ Progress Bar ]
+
+[ Business Profile / Verification Card      > ]
+
+ACCOUNT
+
+[ icon ] My Orders                           >
+------------------------------------------------
+[ icon ] My Addresses                        >
+------------------------------------------------
+[ icon ] Saved Products                      >
+------------------------------------------------
+[ icon ] Notifications                       >
+------------------------------------------------
+[ icon ] Business Details                    >
+------------------------------------------------
+[ icon ] GST & License Details               >
+------------------------------------------------
+[ icon ] Help & Support                      >
+
+LEGAL
+
+[ icon ] Privacy Policy                      >
+------------------------------------------------
+[ icon ] Terms & Conditions                  >
+------------------------------------------------
+[ icon ] About Us                            >
+
+[ Logout ]
+
+==================================================
+FINAL TEST
+==================================================
+
+1. Login with a real Supabase user.
+2. Open Account tab.
+3. Verify real user name, phone, and email are displayed.
+4. Verify Profile Completion is dynamically calculated.
+5. Tap Edit.
+6. Type multiple words continuously and verify keyboard does not dismiss after each character.
+7. Save the profile.
+8. Return to Account and verify updated data immediately appears.
+9. Tap My Orders and verify real Supabase orders appear.
+10. Tap My Addresses and verify database-backed addresses.
+11. Verify business profile status is not hardcoded.
+12. Scroll to the bottom.
+13. Verify Logout is fully visible above bottom navigation.
+14. Logout and verify navigation resets to Login.
+15. Restart the app and verify authenticated/profile state works correctly.
+
+Do not use demo data.
+Do not use mock profile data.
+Do not copy Netmeds branding.
+Create an original premium wholesale pharmacy Account/Profile screen inspired by the reference layout.
