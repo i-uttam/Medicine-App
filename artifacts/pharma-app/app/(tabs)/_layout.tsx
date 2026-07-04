@@ -7,6 +7,7 @@ import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Tabs } from 'expo-router';
 import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '@/context/CartContext';
 
 function CartBadge() {
@@ -35,6 +36,11 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'cart', selected: 'cart.fill' }} />
         <Label>Cart</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} />
+        <Label>Account</Label>
+      </NativeTabs.Trigger>
+      {/* Hidden tabs — still routable but not in bar */}
       <NativeTabs.Trigger name="wishlist">
         <Icon sf={{ default: 'heart', selected: 'heart.fill' }} />
         <Label>Wishlist</Label>
@@ -42,10 +48,6 @@ function NativeTabLayout() {
       <NativeTabs.Trigger name="orders">
         <Icon sf={{ default: 'list.bullet.clipboard', selected: 'list.bullet.clipboard.fill' }} />
         <Label>Orders</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} />
-        <Label>Profile</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -57,6 +59,10 @@ function ClassicTabLayout() {
   const isDark = colorScheme === 'dark';
   const isIOS = Platform.OS === 'ios';
   const isWeb = Platform.OS === 'web';
+  const insets = useSafeAreaInsets();
+
+  const TAB_HEIGHT = 60;
+  const barHeight = TAB_HEIGHT + (isWeb ? 0 : insets.bottom);
 
   return (
     <Tabs
@@ -67,21 +73,25 @@ function ClassicTabLayout() {
         tabBarStyle: {
           position: 'absolute',
           backgroundColor: isIOS ? 'transparent' : colors.card,
-          borderTopWidth: 1,
+          borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
           elevation: 0,
-          height: isWeb ? 84 : 60,
+          height: barHeight,
+          paddingBottom: isWeb ? 8 : insets.bottom + 4,
+          paddingTop: 8,
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView intensity={100} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+            <BlurView intensity={90} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           ) : isWeb ? (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]} />
           ) : null,
         tabBarLabelStyle: {
           fontSize: 11,
           fontFamily: 'Inter_500Medium',
-          marginBottom: 2,
+        },
+        tabBarIconStyle: {
+          marginTop: 2,
         },
       }}
     >
@@ -91,7 +101,7 @@ function ClassicTabLayout() {
           title: 'Home',
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="house" tintColor={color} size={24} />
+              <SymbolView name="house" tintColor={color} size={23} />
             ) : (
               <Feather name="home" size={22} color={color} />
             ),
@@ -103,7 +113,7 @@ function ClassicTabLayout() {
           title: 'Categories',
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="square.grid.2x2" tintColor={color} size={24} />
+              <SymbolView name="square.grid.2x2" tintColor={color} size={23} />
             ) : (
               <MaterialCommunityIcons name="view-grid-outline" size={22} color={color} />
             ),
@@ -113,56 +123,33 @@ function ClassicTabLayout() {
         name="cart"
         options={{
           title: 'Cart',
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <View>
-                <SymbolView name="cart" tintColor={color} size={24} />
-                <CartBadge />
-              </View>
-            ) : (
-              <View>
+          tabBarIcon: ({ color }) => (
+            <View>
+              {isIOS ? (
+                <SymbolView name="cart" tintColor={color} size={23} />
+              ) : (
                 <Ionicons name="cart-outline" size={22} color={color} />
-                <CartBadge />
-              </View>
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="wishlist"
-        options={{
-          title: 'Wishlist',
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="heart" tintColor={color} size={24} />
-            ) : (
-              <Ionicons name="heart-outline" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: 'Orders',
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="list.bullet.clipboard" tintColor={color} size={24} />
-            ) : (
-              <Ionicons name="receipt-outline" size={22} color={color} />
-            ),
+              )}
+              <CartBadge />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'Account',
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="person.crop.circle" tintColor={color} size={24} />
+              <SymbolView name="person.crop.circle" tintColor={color} size={23} />
             ) : (
               <Ionicons name="person-outline" size={22} color={color} />
             ),
         }}
       />
+      {/* Hidden from tab bar but still navigable */}
+      <Tabs.Screen name="wishlist" options={{ href: null }} />
+      <Tabs.Screen name="orders" options={{ href: null }} />
     </Tabs>
   );
 }
@@ -178,7 +165,7 @@ const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
     top: -4,
-    right: -4,
+    right: -8,
     minWidth: 16,
     height: 16,
     borderRadius: 8,

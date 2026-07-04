@@ -210,18 +210,30 @@ export default function ProfileScreen() {
             </View>
           </SectionCard>
 
-          {/* Notifications */}
-          <SectionCard title="Notifications" colors={colors}>
-            <Pressable
-              style={[styles.supportRow, { borderBottomColor: 'transparent' }]}
-              onPress={() => router.push('/notifications')}
-            >
-              <View style={[styles.supportIcon, { backgroundColor: colors.muted }]}>
-                <Ionicons name="notifications-outline" size={18} color={colors.primary} />
-              </View>
-              <Text style={[styles.supportLabel, { color: colors.foreground }]}>Notifications</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
-            </Pressable>
+          {/* My Activity */}
+          <SectionCard title="My Activity" colors={colors}>
+            {[
+              { icon: 'receipt-outline', label: 'My Orders', badge: orders.length > 0 ? orders.length.toString() : null, onPress: () => router.push('/(tabs)/orders') },
+              { icon: 'heart-outline', label: 'Wishlist', badge: null, onPress: () => router.push('/(tabs)/wishlist') },
+              { icon: 'notifications-outline', label: 'Notifications', badge: null, onPress: () => router.push('/notifications') },
+            ].map((item, i, arr) => (
+              <Pressable
+                key={item.label}
+                style={[styles.supportRow, { borderBottomColor: i < arr.length - 1 ? colors.border : 'transparent' }]}
+                onPress={item.onPress}
+              >
+                <View style={[styles.supportIcon, { backgroundColor: colors.muted }]}>
+                  <Ionicons name={item.icon as any} size={18} color={colors.primary} />
+                </View>
+                <Text style={[styles.supportLabel, { color: colors.foreground }]}>{item.label}</Text>
+                {item.badge && (
+                  <View style={[styles.badgePill, { backgroundColor: colors.primary }]}>
+                    <Text style={styles.badgePillText}>{item.badge}</Text>
+                  </View>
+                )}
+                <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+              </Pressable>
+            ))}
           </SectionCard>
 
           {/* Support */}
@@ -322,4 +334,6 @@ const styles = StyleSheet.create({
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderRadius: 16, borderWidth: 1.5 },
   logoutText: { fontSize: 15, fontWeight: '600', fontFamily: 'Inter_600SemiBold' },
   version: { fontSize: 12, textAlign: 'center', fontFamily: 'Inter_400Regular' },
+  badgePill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, marginRight: 4 },
+  badgePillText: { color: '#FFF', fontSize: 11, fontWeight: '700', fontFamily: 'Inter_700Bold' },
 });

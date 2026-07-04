@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
@@ -22,6 +23,106 @@ const MAX_VERIFY_ATTEMPTS = 5; // lockout after 5 wrong guesses
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
+
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [salt, hash] = stored.split(":");
+  if (!salt || !hash) return false;
+  try {
+    const inputHash = scryptSync(password, salt, 64);
+    return timingSafeEqual(Buffer.from(hash, "hex"), inputHash);
+  } catch {
+    return false;
+  }
+}
+
+// POST /api/auth/register — email + password registration
+router.post("/auth/register", async (req, res) => {
+  const { email, password } = req.body as { email?: string; password?: string };
+
+  if (!email || !password) {
+    res.status(400).json({ error: "email and password are required" });
+    return;
+  }
+
+  if (password.length < 6) {
+    res.status(400).json({ error: "Password must be at least 6 characters" });
+    return;
+  }
+
+  const key = email.toLowerCase();
+
+  try {
+    const existing = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, key))
+      .limit(1);
+
+    if (existing.length > 0) {
+      res.status(409).json({ error: "An account with this email already exists. Please sign in." });
+      return;
+    }
+
+    const passwordHash = hashPassword(password);
+    const created = await db
+      .insert(usersTable)
+      .values({ email: key, passwordHash })
+      .returning();
+
+    res.json({ user: created[0] });
+  } catch (err) {
+    console.error("Register error:", err);
+    res.status(500).json({ error: "Registration failed. Please try again." });
+  }
+});
+
+// POST /api/auth/login-password — email + password sign in
+router.post("/auth/login-password", async (req, res) => {
+  const { email, password } = req.body as { email?: string; password?: string };
+
+  if (!email || !password) {
+    res.status(400).json({ error: "email and password are required" });
+    return;
+  }
+
+  const key = email.toLowerCase();
+
+  try {
+    const rows = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, key))
+      .limit(1);
+
+    if (rows.length === 0) {
+      res.status(401).json({ error: "No account found with this email. Please register first." });
+      return;
+    }
+
+    const user = rows[0];
+
+    if (!user.passwordHash) {
+      res.status(401).json({ error: "This account uses OTP login. Please use the OTP option." });
+      return;
+    }
+
+    if (!verifyPassword(password, user.passwordHash)) {
+      res.status(401).json({ error: "Incorrect password. Please try again." });
+      return;
+    }
+
+    res.json({ user });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Login failed. Please try again." });
+  }
+});
 
 // POST /api/auth/send-otp
 router.post("/auth/send-otp", async (req, res) => {
